@@ -20,10 +20,11 @@ type DB interface {
 	UpsertFetchMeta(*models.FetchMeta) error
 
 	InsertKEVulns([]models.KEVuln) error
-	GetKEVulnByCveID(string) (models.KEVuln, error)
-	GetKEVulnByMultiCveID([]string) (map[string]models.KEVuln, error)
+	GetKEVulnByCveID(string) ([]models.KEVuln, error)
+	GetKEVulnByMultiCveID([]string) (map[string][]models.KEVuln, error)
 }
 
+// Option :
 type Option struct {
 	RedisTimeout time.Duration
 }

@@ -22,6 +22,7 @@ func (f FetchMeta) OutDated() bool {
 	return f.SchemaVersion != LatestSchemaVersion
 }
 
+// KEVuln : Known Exploited Vulnerabilities
 type KEVuln struct {
 	ID          int64      `json:"-"`
 	CveID       string     `gorm:"type:varchar(255);index:idx_kev_cve_id" csv:"CVE"`

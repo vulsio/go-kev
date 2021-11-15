@@ -60,18 +60,20 @@ ____________________________________O/_______
 ⇨ http server started on 127.0.0.1:1328
 {"time":"2021-11-16T04:40:30.511368993+09:00","id":"","remote_ip":"127.0.0.1","host":"127.0.0.1:1328","method":"GET","uri":"/cves/CVE-2021-27104​","user_agent":"curl/7.68.0","status":200,"error":"","latency":5870905,"latency_human":"5.870905ms","bytes_in":0,"bytes_out":397}
 
-$ curl http://127.0.0.1:1328/cves/CVE-2021-27104​ | jq
-{
-  "CveID": "CVE-2021-27104​",
-  "Source": "Accellion",
-  "Product": "FTA",
-  "Title": "Accellion FTA OS Command Injection Vulnerability",
-  "AddedDate": "2021-11-03T00:00:00Z",
-  "Description": "Accellion FTA 9_12_370 and earlier is affected by OS command execution via a crafted POST request to various admin endpoints.",
-  "Action": "Apply updates per vendor instructions.",
-  "DueDate": "2021-11-17T00:00:00Z",
-  "Notes": ""
-}
+$ curl http://127.0.0.1:1328/cves/CVE-2021-27104 | jq
+[
+  {
+    "CveID": "CVE-2021-27104",
+    "Source": "Accellion",
+    "Product": "FTA",
+    "Title": "Accellion FTA OS Command Injection Vulnerability",
+    "AddedDate": "2021-11-03T00:00:00Z",
+    "Description": "Accellion FTA 9_12_370 and earlier is affected by OS command execution via a crafted POST request to various admin endpoints.",
+    "Action": "Apply updates per vendor instructions.",
+    "DueDate": "2021-11-17T00:00:00Z",
+    "Notes": ""
+  }
+]
 ```
 
 # License

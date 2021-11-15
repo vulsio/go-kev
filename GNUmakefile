@@ -1,3 +1,26 @@
+.PHONY: \
+	all \
+	build \
+	install \
+	vendor \
+	lint \
+	vet \
+	fmt \
+	fmtcheck \
+	pretest \
+	test \
+	integration \
+	cov \
+	clean \
+	build-integration \
+	clean-integration \
+	fetch-rdb \
+	fetch-redis \
+	diff-cveid \
+	diff-package \
+	diff-server-rdb \
+	diff-server-redis \
+	diff-server-rdb-redis
 
 SRCS = $(shell git ls-files '*.go')
 PKGS = $(shell go list ./...)
@@ -9,7 +32,7 @@ LDFLAGS := -X 'github.com/MaineK00n/go-kev/config.Version=$(VERSION)' \
 GO := GO111MODULE=on go
 GO_OFF := GO111MODULE=off go
 
-all: build
+all: build test
 
 build: main.go 
 	$(GO) build -ldflags "$(LDFLAGS)" -o go-kev $<
@@ -30,7 +53,7 @@ fmt:
 fmtcheck:
 	$(foreach file,$(SRCS),gofmt -d $(file);)
 
-pretest: vet fmtcheck
+pretest: lint vet fmtcheck
 
 test: pretest
 	$(GO) test -cover -v ./... || exit;
@@ -62,29 +85,24 @@ clean-integration:
 	-docker rm redis-old redis-new
 
 fetch-rdb:
-	integration/go-kev.old fetch msfdb --dbpath=integration/go-kev.old.sqlite3
-	integration/go-kev.new fetch msfdb --dbpath=integration/go-kev.new.sqlite3
+	integration/go-kev.old fetch kevuln --dbpath=integration/go-kev.old.sqlite3
+	integration/go-kev.new fetch kevuln --dbpath=integration/go-kev.new.sqlite3
 
 fetch-redis:
 	docker run --name redis-old -d -p 127.0.0.1:6379:6379 redis
 	docker run --name redis-new -d -p 127.0.0.1:6380:6379 redis
 
-	integration/go-kev.old fetch msfdb --dbtype redis --dbpath "redis://127.0.0.1:6379/0"
-	integration/go-kev.new fetch msfdb --dbtype redis --dbpath "redis://127.0.0.1:6380/0"
+	integration/go-kev.old fetch kevuln --dbtype redis --dbpath "redis://127.0.0.1:6379/0"
+	integration/go-kev.new fetch kevuln --dbtype redis --dbpath "redis://127.0.0.1:6380/0"
 
 diff-cves:
 	@ python integration/diff_server_mode.py cves --sample_rate 0.01
 	@ python integration/diff_server_mode.py multi-cves --sample_rate 0.01
 
-diff-edbs:
-	@ python integration/diff_server_mode.py edbs --sample_rate 0.01
-	@ python integration/diff_server_mode.py multi-edbs --sample_rate 0.01
-
 diff-server-rdb:
 	integration/go-kev.old server --dbpath=integration/go-kev.old.sqlite3 --port 1325 > /dev/null 2>&1 & 
 	integration/go-kev.new server --dbpath=integration/go-kev.new.sqlite3 --port 1326 > /dev/null 2>&1 &
 	make diff-cves
-	make diff-edbs
 	pkill go-kev.old 
 	pkill go-kev.new
 
@@ -92,7 +110,6 @@ diff-server-redis:
 	integration/go-kev.old server --dbtype redis --dbpath "redis://127.0.0.1:6379/0" --port 1325 > /dev/null 2>&1 & 
 	integration/go-kev.new server --dbtype redis --dbpath "redis://127.0.0.1:6380/0" --port 1326 > /dev/null 2>&1 &
 	make diff-cves
-	make diff-edbs
 	pkill go-kev.old 
 	pkill go-kev.new
 
@@ -100,5 +117,4 @@ diff-server-rdb-redis:
 	integration/go-kev.new server --dbpath=integration/go-kev.new.sqlite3 --port 1325 > /dev/null 2>&1 &
 	integration/go-kev.new server --dbtype redis --dbpath "redis://127.0.0.1:6380/0" --port 1326 > /dev/null 2>&1 &
 	make diff-cves
-	make diff-edbs
 	pkill go-kev.new

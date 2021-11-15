@@ -41,7 +41,7 @@ func (r *RDBDriver) Name() string {
 }
 
 // OpenDB opens Database
-func (r *RDBDriver) OpenDB(dbType, dbPath string, debugSQL bool, option Option) (locked bool, err error) {
+func (r *RDBDriver) OpenDB(dbType, dbPath string, debugSQL bool, _ Option) (locked bool, err error) {
 	gormConfig := gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		Logger: logger.New(
@@ -202,17 +202,17 @@ func (r *RDBDriver) deleteAndInsertKEVulns(records []models.KEVuln) (err error) 
 }
 
 // GetKEVulnByCveID :
-func (r *RDBDriver) GetKEVulnByCveID(cveID string) (models.KEVuln, error) {
-	vuln := models.KEVuln{}
+func (r *RDBDriver) GetKEVulnByCveID(cveID string) ([]models.KEVuln, error) {
+	vuln := []models.KEVuln{}
 	if err := r.conn.Where(&models.KEVuln{CveID: cveID}).Find(&vuln).Error; err != nil {
-		return models.KEVuln{}, xerrors.Errorf("Failed to get info by CVE-ID. err: %w", err)
+		return nil, xerrors.Errorf("Failed to get info by CVE-ID. err: %w", err)
 	}
 	return vuln, nil
 }
 
 // GetKEVulnByMultiCveID :
-func (r *RDBDriver) GetKEVulnByMultiCveID(cveIDs []string) (map[string]models.KEVuln, error) {
-	vuln := map[string]models.KEVuln{}
+func (r *RDBDriver) GetKEVulnByMultiCveID(cveIDs []string) (map[string][]models.KEVuln, error) {
+	vuln := map[string][]models.KEVuln{}
 	for _, cveID := range cveIDs {
 		v, err := r.GetKEVulnByCveID(cveID)
 		if err != nil {
