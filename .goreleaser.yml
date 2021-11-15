@@ -1,0 +1,21 @@
+project_name: go-kev
+release:
+  github:
+    owner: MaineK00n
+    name: go-kev
+builds:
+- goos:
+  - linux
+  goarch:
+  - amd64
+  main: .
+  ldflags: -s -w -X github.com/MaineK00n/go-kev/config.Version={{.Version}} -X github.com/MaineK00n/go-kev/config.Revision={{.Commit}}
+  binary: go-kev
+archives:
+- name_template: '{{ .Binary }}_{{.Version}}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}'
+  format: tar.gz
+  files:
+  - LICENSE
+  - README*
+snapshot:
+  name_template: SNAPSHOT-{{ .Commit }}
