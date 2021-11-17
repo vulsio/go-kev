@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 
-	"github.com/MaineK00n/go-kev/db"
+	"github.com/vulsio/go-kev/db"
 )
 
 // Start :

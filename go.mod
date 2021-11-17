@@ -1,4 +1,4 @@
-module github.com/MaineK00n/go-kev
+module github.com/vulsio/go-kev
 
 go 1.17
 

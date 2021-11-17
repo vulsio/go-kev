@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/MaineK00n/go-kev/config"
+	"github.com/vulsio/go-kev/config"
 )
 
 func init() {

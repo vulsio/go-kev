@@ -19,8 +19,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/MaineK00n/go-kev/config"
-	"github.com/MaineK00n/go-kev/models"
+	"github.com/vulsio/go-kev/config"
+	"github.com/vulsio/go-kev/models"
 )
 
 const (

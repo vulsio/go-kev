@@ -17,6 +17,6 @@ jobs:
         uses: sue445/go-mod-tidy-pr@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          git_user_name: MaineK00n
-          git_user_email: mainek00n.1229@gmail.com
+          git_user_name: kotakanbe
+          git_user_email: kotakanbe@gmail.com
           go_version: 1.17.x

@@ -6,9 +6,9 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 
-	"github.com/MaineK00n/go-kev/db"
-	"github.com/MaineK00n/go-kev/server"
-	"github.com/MaineK00n/go-kev/utils"
+	"github.com/vulsio/go-kev/db"
+	"github.com/vulsio/go-kev/server"
+	"github.com/vulsio/go-kev/utils"
 )
 
 // serverCmd represents the server command

@@ -6,7 +6,7 @@ RUN apk add --no-cache \
         gcc \
         musl-dev
 
-ENV REPOSITORY github.com/MaineK00n/go-kev
+ENV REPOSITORY github.com/vulsio/go-kev
 COPY . $GOPATH/src/$REPOSITORY
 RUN cd $GOPATH/src/$REPOSITORY && make install
 

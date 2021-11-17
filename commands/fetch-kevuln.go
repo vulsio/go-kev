@@ -6,10 +6,10 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 
-	"github.com/MaineK00n/go-kev/db"
-	"github.com/MaineK00n/go-kev/fetcher"
-	"github.com/MaineK00n/go-kev/models"
-	"github.com/MaineK00n/go-kev/utils"
+	"github.com/vulsio/go-kev/db"
+	"github.com/vulsio/go-kev/fetcher"
+	"github.com/vulsio/go-kev/models"
+	"github.com/vulsio/go-kev/utils"
 )
 
 var fetchCatalogCmd = &cobra.Command{
