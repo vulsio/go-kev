@@ -14,8 +14,8 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/xerrors"
 
-	"github.com/MaineK00n/go-kev/config"
-	"github.com/MaineK00n/go-kev/models"
+	"github.com/vulsio/go-kev/config"
+	"github.com/vulsio/go-kev/models"
 )
 
 /**

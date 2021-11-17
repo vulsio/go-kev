@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/MaineK00n/go-kev/utils"
+	"github.com/vulsio/go-kev/utils"
 )
 
 var cfgFile string

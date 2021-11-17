@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/xerrors"
 
-	"github.com/MaineK00n/go-kev/models"
+	"github.com/vulsio/go-kev/models"
 )
 
 // DB :

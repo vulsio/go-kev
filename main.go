@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/MaineK00n/go-kev/commands"
+	"github.com/vulsio/go-kev/commands"
 )
 
 func main() {

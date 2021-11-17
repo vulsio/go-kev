@@ -6,8 +6,8 @@ import (
 	"github.com/gocarina/gocsv"
 	"github.com/inconshreveable/log15"
 
-	"github.com/MaineK00n/go-kev/models"
-	"github.com/MaineK00n/go-kev/utils"
+	"github.com/vulsio/go-kev/models"
+	"github.com/vulsio/go-kev/utils"
 )
 
 var utf8Bom = []byte{239, 187, 191}
