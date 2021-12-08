@@ -25,15 +25,15 @@ func (f FetchMeta) OutDated() bool {
 // KEVuln : Known Exploited Vulnerabilities
 type KEVuln struct {
 	ID          int64      `json:"-"`
-	CveID       string     `gorm:"type:varchar(255);index:idx_kev_cve_id" csv:"CVE"`
-	Source      string     `gorm:"type:varchar(255)" csv:"Vendor/Project"`
-	Product     string     `gorm:"type:varchar(255)" csv:"Product"`
-	Title       string     `gorm:"type:varchar(255)" csv:"Vulnerability Name"`
-	AddedDate   KEVulnTime `gorm:"type:time" csv:"Date Added to Catalog"`
-	Description string     `gorm:"type:text" csv:"Short Description"`
-	Action      string     `gorm:"type:varchar(255)" csv:"Action"`
-	DueDate     KEVulnTime `gorm:"type:time" csv:"Due Date"`
-	Notes       string     `gorm:"type:text" csv:"Notes"`
+	CveID       string     `gorm:"type:varchar(255);index:idx_kev_cve_id" csv:"cveID"`
+	Source      string     `gorm:"type:varchar(255)" csv:"vendorProject"`
+	Product     string     `gorm:"type:varchar(255)" csv:"product"`
+	Title       string     `gorm:"type:varchar(255)" csv:"vulnerabilityName"`
+	AddedDate   KEVulnTime `gorm:"type:time" csv:"dateAdded"`
+	Description string     `gorm:"type:text" csv:"shortDescription"`
+	Action      string     `gorm:"type:varchar(255)" csv:"requiredAction"`
+	DueDate     KEVulnTime `gorm:"type:time" csv:"dueDate"`
+	Notes       string     `gorm:"type:text" csv:"notes"`
 }
 
 // KEVulnTime :
@@ -41,7 +41,7 @@ type KEVulnTime struct {
 	time.Time
 }
 
-const kevDateFormat = "2-Jan-06"
+const kevDateFormat = "1/2/2006"
 
 // UnmarshalCSV :
 func (date *KEVulnTime) UnmarshalCSV(csv string) (err error) {

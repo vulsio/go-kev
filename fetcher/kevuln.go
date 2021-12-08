@@ -5,6 +5,7 @@ import (
 
 	"github.com/gocarina/gocsv"
 	"github.com/inconshreveable/log15"
+	"golang.org/x/xerrors"
 
 	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/utils"
@@ -51,6 +52,10 @@ func FetchKEVuln() ([]models.KEVuln, error) {
 	for i := range vulns {
 		if hasZeroWidthSpace([]byte(vulns[i].CveID)) {
 			vulns[i].CveID = string(stripZeroWidthSpace([]byte(vulns[i].CveID)))
+		}
+
+		if vulns[i].CveID == "" {
+			return nil, xerrors.New("Failed to fetch vulnerability info. err: CVE-ID is empty. CSV format may have been changed.")
 		}
 	}
 
