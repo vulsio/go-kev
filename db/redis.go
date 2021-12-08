@@ -191,9 +191,7 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 				newDeps[record.CveID][hash] = struct{}{}
 			}
 			if _, ok := oldDeps[record.CveID]; ok {
-				if _, ok := oldDeps[record.CveID][hash]; ok {
-					delete(oldDeps[record.CveID], hash)
-				}
+				delete(oldDeps[record.CveID], hash)
 				if len(oldDeps[record.CveID]) == 0 {
 					delete(oldDeps, record.CveID)
 				}
