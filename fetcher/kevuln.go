@@ -11,7 +11,7 @@ import (
 )
 
 // FetchKEVuln :
-func FetchKEVuln() ([]models.KEVulnJSON, error) {
+func FetchKEVuln() ([]models.KEVuln, error) {
 	url := "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 	log15.Info("Fetching", "URL", url)
 	vulnJSON, err := utils.FetchURL(url)

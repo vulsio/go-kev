@@ -48,14 +48,9 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 	}
 
 	log15.Info("Fetching Known Exploited Vulnerabilities")
-	vulnJSONs, err := fetcher.FetchKEVuln()
+	vulns, err := fetcher.FetchKEVuln()
 	if err != nil {
 		return xerrors.Errorf("Failed to fetch Known Exploited Vulnerabilities. err: %w", err)
-	}
-
-	vulns, err := models.ConvertKEVuln(vulnJSONs)
-	if err != nil {
-		return xerrors.Errorf("Failed to convert Known Exploited Vulnerabilities. err: %w", err)
 	}
 
 	log15.Info("Insert Known Exploited Vulnerabilities into go-kev.", "db", driver.Name())
