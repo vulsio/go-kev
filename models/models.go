@@ -41,15 +41,12 @@ type KEVulnTime struct {
 	time.Time
 }
 
-const kevDateFormat = "1/2/2006"
+const kevDateFormat = "2006-01-02"
 
 // UnmarshalCSV :
 func (date *KEVulnTime) UnmarshalCSV(csv string) (err error) {
 	date.Time, err = time.Parse(kevDateFormat, csv)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Scan :
