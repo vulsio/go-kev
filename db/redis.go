@@ -127,7 +127,7 @@ func (r *RedisDriver) GetFetchMeta() (*models.FetchMeta, error) {
 		return nil, xerrors.Errorf("Failed to Exists. err: %w", err)
 	}
 	if exists == 0 {
-		return &models.FetchMeta{GoKEVRevision: config.Revision, SchemaVersion: models.LatestSchemaVersion, LastFetchedDate: time.Now()}, nil
+		return &models.FetchMeta{GoKEVRevision: config.Revision, SchemaVersion: models.LatestSchemaVersion, LastFetchedDate: time.Date(1000, time.January, 1, 0, 0, 0, 0, time.UTC)}, nil
 	}
 
 	revision, err := r.conn.HGet(ctx, fetchMetaKey, "Revision").Result()
