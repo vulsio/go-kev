@@ -16,7 +16,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gorm.io/driver/mysql v1.2.0
 	gorm.io/driver/postgres v1.2.2
-	gorm.io/driver/sqlite v1.2.4
+	gorm.io/driver/sqlite v1.2.6
 	gorm.io/gorm v1.22.3
 )
 
