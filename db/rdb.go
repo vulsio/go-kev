@@ -150,7 +150,7 @@ func (r *RDBDriver) GetFetchMeta() (fetchMeta *models.FetchMeta, err error) {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
 		}
-		return &models.FetchMeta{GoKEVRevision: config.Revision, SchemaVersion: models.LatestSchemaVersion}, nil
+		return &models.FetchMeta{GoKEVRevision: config.Revision, SchemaVersion: models.LatestSchemaVersion, LastFetchedDate: time.Now()}, nil
 	}
 
 	return fetchMeta, nil
@@ -160,6 +160,8 @@ func (r *RDBDriver) GetFetchMeta() (fetchMeta *models.FetchMeta, err error) {
 func (r *RDBDriver) UpsertFetchMeta(fetchMeta *models.FetchMeta) error {
 	fetchMeta.GoKEVRevision = config.Revision
 	fetchMeta.SchemaVersion = models.LatestSchemaVersion
+	fetchMeta.LastFetchedDate = time.Now()
+
 	return r.conn.Save(fetchMeta).Error
 }
 

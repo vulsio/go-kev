@@ -41,8 +41,9 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 		return xerrors.Errorf("Failed to get FetchMeta from DB. err: %w", err)
 	}
 	if fetchMeta.OutDated() {
-		return xerrors.Errorf("Failed to Insert CVEs into DB. SchemaVersion is old. SchemaVersion: %+v", map[string]uint{"latest": models.LatestSchemaVersion, "DB": fetchMeta.SchemaVersion})
+		return xerrors.Errorf("Failed to Insert CVEs into DB. err: SchemaVersion is old. SchemaVersion: %+v", map[string]uint{"latest": models.LatestSchemaVersion, "DB": fetchMeta.SchemaVersion})
 	}
+	// update SchemaVersion
 	if err := driver.UpsertFetchMeta(fetchMeta); err != nil {
 		return xerrors.Errorf("Failed to upsert FetchMeta to DB. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
@@ -56,6 +57,11 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 	log15.Info("Insert Known Exploited Vulnerabilities into go-kev.", "db", driver.Name())
 	if err := driver.InsertKEVulns(vulns); err != nil {
 		return xerrors.Errorf("Failed to insert. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
+	}
+
+	// update LastFetchedDate
+	if err := driver.UpsertFetchMeta(fetchMeta); err != nil {
+		return xerrors.Errorf("Failed to upsert FetchMeta to DB. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
 
 	return nil

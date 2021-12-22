@@ -12,9 +12,10 @@ const LatestSchemaVersion = 1
 
 // FetchMeta has meta information
 type FetchMeta struct {
-	gorm.Model    `json:"-"`
-	GoKEVRevision string
-	SchemaVersion uint
+	gorm.Model      `json:"-"`
+	GoKEVRevision   string
+	SchemaVersion   uint
+	LastFetchedDate time.Time
 }
 
 // OutDated checks whether last fetched feed is out dated

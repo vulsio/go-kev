@@ -7,6 +7,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/vulsio/go-kev/db"
+	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/server"
 	"github.com/vulsio/go-kev/utils"
 )
@@ -43,6 +44,14 @@ func executeServer(_ *cobra.Command, _ []string) (err error) {
 			return xerrors.Errorf("Failed to initialize DB. Close DB connection before fetching. err: %w", err)
 		}
 		return err
+	}
+
+	fetchMeta, err := driver.GetFetchMeta()
+	if err != nil {
+		return xerrors.Errorf("Failed to get FetchMeta from DB. err: %w", err)
+	}
+	if fetchMeta.OutDated() {
+		return xerrors.Errorf("Failed to start server. err: SchemaVersion is old. SchemaVersion: %+v", map[string]uint{"latest": models.LatestSchemaVersion, "DB": fetchMeta.SchemaVersion})
 	}
 
 	log15.Info("Starting HTTP Server...")

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/go-redis/redis/v8"
@@ -28,16 +29,18 @@ import (
   │ 1 │ KEV#DEP │  JSON  │ TO DELETE OUTDATED AND UNNEEDED FIELD AND MEMBER │
   └───┴─────────┴────────┴──────────────────────────────────────────────────┘
 - Hash
-  ┌───┬────────────────┬───────────────┬──────────────┬──────────────────────────────┐
-  │NO │     KEY        │   FIELD       │     VALUE    │           PURPOSE            │
-  └───┴────────────────┴───────────────┴──────────────┴──────────────────────────────┘
-  ┌───┬────────────────┬───────────────┬──────────────┬──────────────────────────────┐
-  │ 1 │ KEV#CVE#$CVEID │    MD5SUM     │     JSON     │ TO GET VULN FROM CVEID       │
-  ├───┼────────────────┼───────────────┼──────────────┼──────────────────────────────┤
-  │ 2 │ KEV#FETCHMETA  │   Revision    │    string    │ GET Go-KEV Binary Revision   │
-  ├───┼────────────────┼───────────────┼──────────────┼──────────────────────────────┤
-  │ 3 │ KEV#FETCHMETA  │ SchemaVersion │     uint     │ GET Go-KEV Schema Version    │
-  └───┴────────────────┴───────────────┴──────────────┴──────────────────────────────┘
+  ┌───┬────────────────┬─────────────────┬──────────────┬──────────────────────────────┐
+  │NO │     KEY        │   FIELD         │     VALUE    │           PURPOSE            │
+  └───┴────────────────┴─────────────────┴──────────────┴──────────────────────────────┘
+  ┌───┬────────────────┬─────────────────┬──────────────┬──────────────────────────────┐
+  │ 1 │ KEV#CVE#$CVEID │    MD5SUM       │     JSON     │ TO GET VULN FROM CVEID       │
+  ├───┼────────────────┼─────────────────┼──────────────┼──────────────────────────────┤
+  │ 2 │ KEV#FETCHMETA  │   Revision      │    string    │ GET Go-KEV Binary Revision   │
+  ├───┼────────────────┼─────────────────┼──────────────┼──────────────────────────────┤
+  │ 3 │ KEV#FETCHMETA  │ SchemaVersion   │     uint     │ GET Go-KEV Schema Version    │
+  ├───┼────────────────┼─────────────────┼──────────────┼──────────────────────────────┤
+  │ 4 │ KEV#FETCHMETA  │ LastFetchedDate │ time.Time    │ GET Go-KEV Last Fetched Time │
+  └───┴────────────────┴─────────────────┴──────────────┴──────────────────────────────┘
 **/
 
 const (
@@ -124,7 +127,7 @@ func (r *RedisDriver) GetFetchMeta() (*models.FetchMeta, error) {
 		return nil, xerrors.Errorf("Failed to Exists. err: %w", err)
 	}
 	if exists == 0 {
-		return &models.FetchMeta{GoKEVRevision: config.Revision, SchemaVersion: models.LatestSchemaVersion}, nil
+		return &models.FetchMeta{GoKEVRevision: config.Revision, SchemaVersion: models.LatestSchemaVersion, LastFetchedDate: time.Now()}, nil
 	}
 
 	revision, err := r.conn.HGet(ctx, fetchMetaKey, "Revision").Result()
@@ -141,12 +144,21 @@ func (r *RedisDriver) GetFetchMeta() (*models.FetchMeta, error) {
 		return nil, xerrors.Errorf("Failed to ParseUint. err: %w", err)
 	}
 
-	return &models.FetchMeta{GoKEVRevision: revision, SchemaVersion: uint(version)}, nil
+	datestr, err := r.conn.HGet(ctx, fetchMetaKey, "LastFetchedDate").Result()
+	if err != nil {
+		return nil, xerrors.Errorf("Failed to HGet LastFetchedDate. err: %w", err)
+	}
+	date, err := time.Parse(time.RFC3339, datestr)
+	if err != nil {
+		return nil, xerrors.Errorf("Failed to Parse date. err: %w", err)
+	}
+
+	return &models.FetchMeta{GoKEVRevision: revision, SchemaVersion: uint(version), LastFetchedDate: date}, nil
 }
 
 // UpsertFetchMeta upsert FetchMeta to Database
-func (r *RedisDriver) UpsertFetchMeta(fetchMeta *models.FetchMeta) error {
-	return r.conn.HSet(context.Background(), fetchMetaKey, map[string]interface{}{"Revision": fetchMeta.GoKEVRevision, "SchemaVersion": fetchMeta.SchemaVersion}).Err()
+func (r *RedisDriver) UpsertFetchMeta(_ *models.FetchMeta) error {
+	return r.conn.HSet(context.Background(), fetchMetaKey, map[string]interface{}{"Revision": config.Revision, "SchemaVersion": models.LatestSchemaVersion, "LastFetchedDate": time.Now()}).Err()
 }
 
 // InsertKEVulns :
