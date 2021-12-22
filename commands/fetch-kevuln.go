@@ -31,30 +31,37 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 	driver, locked, err := db.NewDB(viper.GetString("dbtype"), viper.GetString("dbpath"), viper.GetBool("debug-sql"), db.Option{})
 	if err != nil {
 		if locked {
+			log15.Error("Failed to initialize DB. Close DB connection before fetching.", "err", err)
 			return xerrors.Errorf("Failed to initialize DB. Close DB connection before fetching. err: %w", err)
 		}
-		return err
+		log15.Error("Failed to open DB.", "err", err)
+		return xerrors.Errorf("Failed to open DB. err: %w", err)
 	}
 
 	fetchMeta, err := driver.GetFetchMeta()
 	if err != nil {
+		log15.Error("Failed to get FetchMeta from DB.", "err", err)
 		return xerrors.Errorf("Failed to get FetchMeta from DB. err: %w", err)
 	}
 	if fetchMeta.OutDated() {
+		log15.Error("Failed to Insert CVEs into DB.", "err", "SchemaVersion is old.", "SchemaVersion", map[string]uint{"latest": models.LatestSchemaVersion, "DB": fetchMeta.SchemaVersion})
 		return xerrors.Errorf("Failed to Insert CVEs into DB. SchemaVersion is old. SchemaVersion: %+v", map[string]uint{"latest": models.LatestSchemaVersion, "DB": fetchMeta.SchemaVersion})
 	}
 	if err := driver.UpsertFetchMeta(fetchMeta); err != nil {
+		log15.Error("Failed to upsert FetchMeta to DB.", "err", err, "dbpath", viper.GetString("dbpath"))
 		return xerrors.Errorf("Failed to upsert FetchMeta to DB. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
 
 	log15.Info("Fetching Known Exploited Vulnerabilities")
 	var vulns []models.KEVuln
 	if vulns, err = fetcher.FetchKEVuln(); err != nil {
+		log15.Error("Failed to fetch Known Exploited Vulnerabilities.", "err", err)
 		return xerrors.Errorf("Failed to fetch Known Exploited Vulnerabilities. err: %w", err)
 	}
 
 	log15.Info("Insert Known Exploited Vulnerabilities into go-kev.", "db", driver.Name())
 	if err := driver.InsertKEVulns(vulns); err != nil {
+		log15.Error("Failed to insert.", "err", err, "dbpath", viper.GetString("dbpath"))
 		return xerrors.Errorf("Failed to insert. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
 
