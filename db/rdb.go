@@ -160,8 +160,6 @@ func (r *RDBDriver) GetFetchMeta() (fetchMeta *models.FetchMeta, err error) {
 func (r *RDBDriver) UpsertFetchMeta(fetchMeta *models.FetchMeta) error {
 	fetchMeta.GoKEVRevision = config.Revision
 	fetchMeta.SchemaVersion = models.LatestSchemaVersion
-	fetchMeta.LastFetchedDate = time.Now()
-
 	return r.conn.Save(fetchMeta).Error
 }
 

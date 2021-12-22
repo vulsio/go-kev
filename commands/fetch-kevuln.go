@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"time"
+
 	"github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,7 +45,7 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 	if fetchMeta.OutDated() {
 		return xerrors.Errorf("Failed to Insert CVEs into DB. err: SchemaVersion is old. SchemaVersion: %+v", map[string]uint{"latest": models.LatestSchemaVersion, "DB": fetchMeta.SchemaVersion})
 	}
-	// update SchemaVersion
+	// If the fetch fails the first time (without SchemaVersion), the DB needs to be cleaned every time, so insert SchemaVersion.
 	if err := driver.UpsertFetchMeta(fetchMeta); err != nil {
 		return xerrors.Errorf("Failed to upsert FetchMeta to DB. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
@@ -59,7 +61,7 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 		return xerrors.Errorf("Failed to insert. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
 
-	// update LastFetchedDate
+	fetchMeta.LastFetchedDate = time.Now()
 	if err := driver.UpsertFetchMeta(fetchMeta); err != nil {
 		return xerrors.Errorf("Failed to upsert FetchMeta to DB. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}

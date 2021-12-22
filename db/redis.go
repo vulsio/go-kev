@@ -157,8 +157,8 @@ func (r *RedisDriver) GetFetchMeta() (*models.FetchMeta, error) {
 }
 
 // UpsertFetchMeta upsert FetchMeta to Database
-func (r *RedisDriver) UpsertFetchMeta(_ *models.FetchMeta) error {
-	return r.conn.HSet(context.Background(), fetchMetaKey, map[string]interface{}{"Revision": config.Revision, "SchemaVersion": models.LatestSchemaVersion, "LastFetchedDate": time.Now()}).Err()
+func (r *RedisDriver) UpsertFetchMeta(fetchMeta *models.FetchMeta) error {
+	return r.conn.HSet(context.Background(), fetchMetaKey, map[string]interface{}{"Revision": config.Revision, "SchemaVersion": models.LatestSchemaVersion, "LastFetchedDate": fetchMeta.LastFetchedDate}).Err()
 }
 
 // InsertKEVulns :
