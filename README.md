@@ -18,16 +18,12 @@ Available Commands:
 
 Flags:
       --config string       config file (default is $HOME/.go-kev.yaml)
-      --dbpath string       /path/to/sqlite3 or SQL connection string
-      --dbtype string       Database type to store data in (sqlite3, mysql, postgres or redis supported)
       --debug               debug mode (default: false)
-      --debug-sql           SQL debug mode
   -h, --help                help for go-kev
       --http-proxy string   http://proxy-url:port (default: empty)
-      --log-dir string      /path/to/log
+      --log-dir string      /path/to/log (default "/var/log/go-kev")
       --log-json            output log as JSON
       --log-to-file         output log to file
-      --quiet               quiet mode (no output)
 
 Use "go-kev [command] --help" for more information about a command.
 ```

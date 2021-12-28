@@ -43,11 +43,6 @@ func init() {
 		panic(err)
 	}
 
-	RootCmd.PersistentFlags().Bool("quiet", false, "quiet mode (no output)")
-	if err := viper.BindPFlag("quiet", RootCmd.PersistentFlags().Lookup("quiet")); err != nil {
-		panic(err)
-	}
-
 	RootCmd.PersistentFlags().Bool("debug", false, "debug mode (default: false)")
 	if err := viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug")); err != nil {
 		panic(err)
