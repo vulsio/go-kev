@@ -18,7 +18,26 @@ var fetchCatalogCmd = &cobra.Command{
 	Use:   "kevuln",
 	Short: "Fetch the data of known exploited vulnerabilities catalog by CISA",
 	Long:  `Fetch the data of known exploited vulnerabilities catalog by CISA`,
-	RunE:  fetchKEVuln,
+	PreRunE: func(cmd *cobra.Command, _ []string) error {
+		if err := viper.BindPFlag("debug-sql", cmd.Parent().PersistentFlags().Lookup("debug-sql")); err != nil {
+			return err
+		}
+
+		if err := viper.BindPFlag("dbpath", cmd.Parent().PersistentFlags().Lookup("dbpath")); err != nil {
+			return err
+		}
+
+		if err := viper.BindPFlag("dbtype", cmd.Parent().PersistentFlags().Lookup("dbtype")); err != nil {
+			return err
+		}
+
+		if err := viper.BindPFlag("batch-size", cmd.Parent().PersistentFlags().Lookup("batch-size")); err != nil {
+			return err
+		}
+
+		return nil
+	},
+	RunE: fetchKEVuln,
 }
 
 func init() {

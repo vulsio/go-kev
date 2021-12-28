@@ -1,8 +1,10 @@
 package commands
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var fetchCmd = &cobra.Command{
@@ -14,6 +16,8 @@ var fetchCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(fetchCmd)
 
+	fetchCmd.PersistentFlags().Bool("debug-sql", false, "SQL debug mode")
+	fetchCmd.PersistentFlags().String("dbpath", filepath.Join(os.Getenv("PWD"), "go-kev.sqlite3"), "/path/to/sqlite3 or SQL connection string")
+	fetchCmd.PersistentFlags().String("dbtype", "sqlite3", "Database type to store data in (sqlite3, mysql, postgres or redis supported)")
 	fetchCmd.PersistentFlags().Int("batch-size", 50, "The number of batch size to insert.")
-	_ = viper.BindPFlag("batch-size", fetchCmd.PersistentFlags().Lookup("batch-size"))
 }
