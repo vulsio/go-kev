@@ -47,14 +47,11 @@ var serverCmd = &cobra.Command{
 }
 
 func init() {
-	RootCmd.AddCommand(serverCmd)
-
 	serverCmd.PersistentFlags().Bool("debug-sql", false, "SQL debug mode")
 	serverCmd.PersistentFlags().String("dbpath", filepath.Join(os.Getenv("PWD"), "go-kev.sqlite3"), "/path/to/sqlite3 or SQL connection string")
 	serverCmd.PersistentFlags().String("dbtype", "sqlite3", "Database type to store data in (sqlite3, mysql, postgres or redis supported)")
 	serverCmd.PersistentFlags().String("bind", "127.0.0.1", "HTTP server bind to IP address")
 	serverCmd.PersistentFlags().String("port", "1328", "HTTP server port number")
-
 }
 
 func executeServer(_ *cobra.Command, _ []string) (err error) {

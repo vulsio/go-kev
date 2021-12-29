@@ -1,4 +1,4 @@
-package commands
+package fetch
 
 import (
 	"time"
@@ -38,10 +38,6 @@ var fetchCatalogCmd = &cobra.Command{
 		return nil
 	},
 	RunE: fetchKEVuln,
-}
-
-func init() {
-	fetchCmd.AddCommand(fetchCatalogCmd)
 }
 
 func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {

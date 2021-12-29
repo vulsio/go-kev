@@ -1,4 +1,4 @@
-package commands
+package convert
 
 import (
 	"encoding/json"
@@ -27,10 +27,6 @@ var convertCatalogCmd = &cobra.Command{
 		return nil
 	},
 	RunE: convertKEV,
-}
-
-func init() {
-	convertCmd.AddCommand(convertCatalogCmd)
 }
 
 func convertKEV(_ *cobra.Command, _ []string) (err error) {

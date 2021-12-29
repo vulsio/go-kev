@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/vulsio/go-kev/commands/convert"
+	"github.com/vulsio/go-kev/commands/fetch"
 	"github.com/vulsio/go-kev/utils"
 )
 
@@ -26,6 +28,13 @@ var RootCmd = &cobra.Command{
 func init() {
 	cobra.OnInitialize(initConfig)
 
+	// subcommands
+	RootCmd.AddCommand(fetch.FetchCmd)
+	RootCmd.AddCommand(convert.ConvertCmd)
+	RootCmd.AddCommand(serverCmd)
+	RootCmd.AddCommand(versionCmd)
+
+	// flags
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.go-kev.yaml)")
 
 	RootCmd.PersistentFlags().Bool("log-to-file", false, "output log to file")
