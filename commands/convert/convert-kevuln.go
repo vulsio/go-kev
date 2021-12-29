@@ -76,11 +76,22 @@ func convertKEV(_ *cobra.Command, _ []string) (err error) {
 		if err != nil {
 			return xerrors.Errorf("Failed to create vuln data file. err: %w", err)
 		}
-		defer f.Close()
 
-		if err := json.NewEncoder(f).Encode(vs); err != nil {
+		enc := json.NewEncoder(f)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(vs); err != nil {
+			_ = f.Close() // ignore error; Write error takes precedence
 			return xerrors.Errorf("Failed to encode vuln data. err: %w", err)
 		}
+
+		if err := f.Close(); err != nil {
+			return xerrors.Errorf("Failed to close vuln data file. err: %w", err)
+		}
+	}
+
+	log15.Info("Setting Last Updated Date")
+	if err := setLastUpdatedDate("go-kev/kevuln"); err != nil {
+		return xerrors.Errorf("Failed to set last updated date. err: %w", err)
 	}
 
 	return nil
