@@ -2,8 +2,6 @@ package convert
 
 import (
 	"encoding/json"
-	"errors"
-	"io"
 	"os"
 	"path/filepath"
 	"time"
@@ -31,27 +29,32 @@ func init() {
 
 func setLastUpdatedDate(key string) error {
 	lastUpdatedFilePath := filepath.Join(filepath.Dir(filepath.Clean(viper.GetString("vuln-dir"))), "last_updated.json")
-	f, err := os.OpenFile(lastUpdatedFilePath, os.O_CREATE|os.O_RDWR, 0664)
-	if err != nil {
-		return xerrors.Errorf("Failed to open last updated file. err: %w", err)
-	}
-
 	lastUpdated := map[string]time.Time{}
-	if err := json.NewDecoder(f).Decode(&lastUpdated); err != nil {
-		if !errors.Is(err, io.EOF) {
+	if f, err := os.Open(lastUpdatedFilePath); err != nil {
+		if !os.IsNotExist(err) {
+			return xerrors.Errorf("Failed to open last updated file. err: %w", err)
+		}
+	} else {
+		if err := json.NewDecoder(f).Decode(&lastUpdated); err != nil {
 			_ = f.Close() // ignore error; Write error takes precedence
 			return xerrors.Errorf("Failed to decode last updated file. err: %w", err)
+		}
+		if err := f.Close(); err != nil {
+			return xerrors.Errorf("Failed to close last updated file. err: %w", err)
 		}
 	}
 	lastUpdated[key] = time.Now()
 
+	f, err := os.Create(lastUpdatedFilePath)
+	if err != nil {
+		return xerrors.Errorf("Failed to open last updated file. err: %w", err)
+	}
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	if err = enc.Encode(lastUpdated); err != nil {
 		_ = f.Close() // ignore error; Write error takes precedence
 		return xerrors.Errorf("Failed to encode last updated file. err: %w", err)
 	}
-
 	if err := f.Close(); err != nil {
 		return xerrors.Errorf("Failed to close last updated file. err: %w", err)
 	}
