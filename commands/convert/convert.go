@@ -23,7 +23,7 @@ var ConvertCmd = &cobra.Command{
 
 func init() {
 	// subcommands
-	ConvertCmd.AddCommand(convertCatalogCmd)
+	ConvertCmd.AddCommand(convertKEVulnCmd)
 
 	// flags
 	ConvertCmd.PersistentFlags().String("vuln-dir", utils.GetDefaultVulnDir(), "root directory to output Vuln data")

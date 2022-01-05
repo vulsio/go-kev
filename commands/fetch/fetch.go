@@ -16,7 +16,7 @@ var FetchCmd = &cobra.Command{
 
 func init() {
 	// subcommands
-	FetchCmd.AddCommand(fetchCatalogCmd)
+	FetchCmd.AddCommand(fetchKEVulnCmd)
 
 	// flags
 	FetchCmd.PersistentFlags().Bool("debug-sql", false, "SQL debug mode")

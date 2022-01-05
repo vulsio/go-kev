@@ -16,7 +16,7 @@ import (
 	"github.com/vulsio/go-kev/utils"
 )
 
-var convertCatalogCmd = &cobra.Command{
+var convertKEVulnCmd = &cobra.Command{
 	Use:   "kevuln",
 	Short: "Convert the data of known exploited vulnerabilities catalog by CISA to CVE units",
 	Long:  `Convert the data of known exploited vulnerabilities catalog by CISA to CVE units`,
@@ -26,10 +26,10 @@ var convertCatalogCmd = &cobra.Command{
 		}
 		return nil
 	},
-	RunE: convertKEV,
+	RunE: convertKEVuln,
 }
 
-func convertKEV(_ *cobra.Command, _ []string) (err error) {
+func convertKEVuln(_ *cobra.Command, _ []string) (err error) {
 	if err := utils.SetLogger(viper.GetBool("log-to-file"), viper.GetString("log-dir"), viper.GetBool("debug"), viper.GetBool("log-json")); err != nil {
 		return xerrors.Errorf("Failed to SetLogger. err: %w", err)
 	}

@@ -14,7 +14,7 @@ import (
 	"github.com/vulsio/go-kev/utils"
 )
 
-var fetchCatalogCmd = &cobra.Command{
+var fetchKEVulnCmd = &cobra.Command{
 	Use:   "kevuln",
 	Short: "Fetch the data of known exploited vulnerabilities catalog by CISA",
 	Long:  `Fetch the data of known exploited vulnerabilities catalog by CISA`,
