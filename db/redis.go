@@ -182,9 +182,7 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 			}
 
 			hash := fmt.Sprintf("%x", md5.Sum(j))
-			if err := pipe.HSet(ctx, fmt.Sprintf(cveIDKeyFormat, record.CveID), hash, string(j)).Err(); err != nil {
-				return xerrors.Errorf("Failed to HSet CVE. err: %w", err)
-			}
+			_ = pipe.HSet(ctx, fmt.Sprintf(cveIDKeyFormat, record.CveID), hash, string(j))
 
 			if _, ok := newDeps[record.CveID]; !ok {
 				newDeps[record.CveID] = map[string]struct{}{}
@@ -193,9 +191,7 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 				newDeps[record.CveID][hash] = struct{}{}
 			}
 			if _, ok := oldDeps[record.CveID]; ok {
-				if _, ok := oldDeps[record.CveID][hash]; ok {
-					delete(oldDeps[record.CveID], hash)
-				}
+				delete(oldDeps[record.CveID], hash)
 				if len(oldDeps[record.CveID]) == 0 {
 					delete(oldDeps, record.CveID)
 				}
@@ -211,18 +207,14 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 	pipe := r.conn.Pipeline()
 	for cveID, hashes := range oldDeps {
 		for hash := range hashes {
-			if err := pipe.HDel(ctx, fmt.Sprintf(cveIDKeyFormat, cveID), hash).Err(); err != nil {
-				return xerrors.Errorf("Failed to HDel. err: %w", err)
-			}
+			_ = pipe.HDel(ctx, fmt.Sprintf(cveIDKeyFormat, cveID), hash)
 		}
 	}
 	newDepsJSON, err := json.Marshal(newDeps)
 	if err != nil {
 		return xerrors.Errorf("Failed to Marshal JSON. err: %w", err)
 	}
-	if err := pipe.Set(ctx, depKey, string(newDepsJSON), 0).Err(); err != nil {
-		return xerrors.Errorf("Failed to Set depkey. err: %w", err)
-	}
+	_ = pipe.Set(ctx, depKey, string(newDepsJSON), 0)
 	if _, err := pipe.Exec(ctx); err != nil {
 		return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
 	}

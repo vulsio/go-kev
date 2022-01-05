@@ -33,7 +33,7 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 		if locked {
 			return xerrors.Errorf("Failed to initialize DB. Close DB connection before fetching. err: %w", err)
 		}
-		return err
+		return xerrors.Errorf("Failed to open DB. err: %w", err)
 	}
 
 	fetchMeta, err := driver.GetFetchMeta()
@@ -50,6 +50,7 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 	log15.Info("Fetching Known Exploited Vulnerabilities")
 	vulns, err := fetcher.FetchKEVuln()
 	if err != nil {
+		log15.Error("Failed to fetch Known Exploited Vulnerabilities.", "err", err)
 		return xerrors.Errorf("Failed to fetch Known Exploited Vulnerabilities. err: %w", err)
 	}
 
