@@ -24,6 +24,11 @@ var convertKEVulnCmd = &cobra.Command{
 		if err := viper.BindPFlag("vuln-dir", cmd.Parent().PersistentFlags().Lookup("vuln-dir")); err != nil {
 			return err
 		}
+
+		if err := viper.BindPFlag("http-proxy", cmd.Parent().PersistentFlags().Lookup("http-proxy")); err != nil {
+			return err
+		}
+
 		return nil
 	},
 	RunE: convertKEVuln,

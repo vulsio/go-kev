@@ -56,12 +56,6 @@ func init() {
 	if err := viper.BindPFlag("debug", RootCmd.PersistentFlags().Lookup("debug")); err != nil {
 		panic(err)
 	}
-
-	// proxy support
-	RootCmd.PersistentFlags().String("http-proxy", "", "http://proxy-url:port (default: empty)")
-	if err := viper.BindPFlag("http-proxy", RootCmd.PersistentFlags().Lookup("http-proxy")); err != nil {
-		panic(err)
-	}
 }
 
 // initConfig reads in config file and ENV variables if set.

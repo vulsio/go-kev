@@ -25,6 +25,7 @@ func init() {
 
 	// flags
 	ConvertCmd.PersistentFlags().String("vuln-dir", utils.GetDefaultVulnDir(), "root directory to output Vuln data")
+	ConvertCmd.PersistentFlags().String("http-proxy", "", "http://proxy-url:port")
 }
 
 func setLastUpdatedDate(key string) error {

@@ -35,6 +35,10 @@ var fetchKEVulnCmd = &cobra.Command{
 			return err
 		}
 
+		if err := viper.BindPFlag("http-proxy", cmd.Parent().PersistentFlags().Lookup("http-proxy")); err != nil {
+			return err
+		}
+
 		return nil
 	},
 	RunE: fetchKEVuln,
