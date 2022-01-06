@@ -8,7 +8,7 @@ import (
 )
 
 // LatestSchemaVersion manages the Schema version used in the latest go-kev.
-const LatestSchemaVersion = 1
+const LatestSchemaVersion = 2
 
 // FetchMeta has meta information
 type FetchMeta struct {
@@ -23,18 +23,26 @@ func (f FetchMeta) OutDated() bool {
 	return f.SchemaVersion != LatestSchemaVersion
 }
 
+// KEVCatalog : CISA Catalog of Known Exploited Vulnerabilities
+type KEVCatalog struct {
+	Title           string    `json:"title"`
+	CatalogVersion  string    `json:"catalogVersion"`
+	DateReleased    time.Time `json:"dateReleased"`
+	Count           int       `json:"count"`
+	Vulnerabilities []KEVuln  `json:"vulnerabilities"`
+}
+
 // KEVuln : Known Exploited Vulnerabilities
 type KEVuln struct {
-	ID          int64      `json:"-"`
-	CveID       string     `gorm:"type:varchar(255);index:idx_kev_cve_id" csv:"cveID"`
-	Source      string     `gorm:"type:varchar(255)" csv:"vendorProject"`
-	Product     string     `gorm:"type:varchar(255)" csv:"product"`
-	Title       string     `gorm:"type:varchar(255)" csv:"vulnerabilityName"`
-	AddedDate   KEVulnTime `gorm:"type:time" csv:"dateAdded"`
-	Description string     `gorm:"type:text" csv:"shortDescription"`
-	Action      string     `gorm:"type:varchar(255)" csv:"requiredAction"`
-	DueDate     KEVulnTime `gorm:"type:time" csv:"dueDate"`
-	Notes       string     `gorm:"type:text" csv:"notes"`
+	ID                int64      `json:"-"`
+	CveID             string     `gorm:"type:varchar(255);index:idx_kev_cve_id" json:"cveID"`
+	VendorProject     string     `gorm:"type:varchar(255)" json:"vendorProject"`
+	Product           string     `gorm:"type:varchar(255)" json:"product"`
+	VulnerabilityName string     `gorm:"type:varchar(255)" json:"vulnerabilityName"`
+	DateAdded         KEVulnTime `gorm:"type:time" json:"dateAdded"`
+	ShortDescription  string     `gorm:"type:text" json:"shortDescription"`
+	RequiredAction    string     `gorm:"type:varchar(255)" json:"requiredAction"`
+	DueDate           KEVulnTime `gorm:"type:time" json:"dueDate"`
 }
 
 // KEVulnTime :
@@ -44,9 +52,15 @@ type KEVulnTime struct {
 
 const kevDateFormat = "2006-01-02"
 
-// UnmarshalCSV :
-func (date *KEVulnTime) UnmarshalCSV(csv string) (err error) {
-	date.Time, err = time.Parse(kevDateFormat, csv)
+// UnmarshalJSON :
+func (date *KEVulnTime) UnmarshalJSON(b []byte) error {
+	if string(b) == "null" {
+		date.Time = time.Time{}
+		return nil
+	}
+
+	var err error
+	date.Time, err = time.Parse(`"`+kevDateFormat+`"`, string(b))
 	return err
 }
 
