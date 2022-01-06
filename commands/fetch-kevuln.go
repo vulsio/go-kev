@@ -48,8 +48,8 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 	}
 
 	log15.Info("Fetching Known Exploited Vulnerabilities")
-	vulns, err := fetcher.FetchKEVuln()
-	if err != nil {
+	var vulns []models.KEVuln
+	if vulns, err = fetcher.FetchKEVuln(); err != nil {
 		log15.Error("Failed to fetch Known Exploited Vulnerabilities.", "err", err)
 		return xerrors.Errorf("Failed to fetch Known Exploited Vulnerabilities. err: %w", err)
 	}
