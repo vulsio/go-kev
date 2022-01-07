@@ -8,10 +8,6 @@ import (
 	"github.com/vulsio/go-kev/config"
 )
 
-func init() {
-	RootCmd.AddCommand(versionCmd)
-}
-
 var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show version",
