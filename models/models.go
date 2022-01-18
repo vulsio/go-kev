@@ -61,6 +61,10 @@ func (date *KEVulnTime) UnmarshalJSON(b []byte) error {
 
 	var err error
 	date.Time, err = time.Parse(`"`+kevDateFormat+`"`, string(b))
+	if _, ok := err.(*time.ParseError); !ok {
+		return err
+	}
+	date.Time, err = time.Parse(`"`+time.RFC3339+`"`, string(b))
 	return err
 }
 
