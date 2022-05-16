@@ -1,11 +1,10 @@
 module github.com/vulsio/go-kev
 
-go 1.17
+go 1.18
 
 require (
 	github.com/cheggaaa/pb/v3 v3.0.8
 	github.com/go-redis/redis/v8 v8.11.4
-	github.com/gocarina/gocsv v0.0.0-20211020200912-82fc2684cc48
 	github.com/inconshreveable/log15 v0.0.0-20201112154412-8562bdadbbac
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/mattn/go-sqlite3 v1.14.9
