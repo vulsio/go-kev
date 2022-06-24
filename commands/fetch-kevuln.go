@@ -26,12 +26,6 @@ func init() {
 }
 
 func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
-	defer func() {
-		if err != nil {
-			log15.Error("failed to fetchKEVuln", "err", err)
-		}
-	}()
-
 	if err := utils.SetLogger(viper.GetBool("log-to-file"), viper.GetString("log-dir"), viper.GetBool("debug"), viper.GetBool("log-json")); err != nil {
 		return xerrors.Errorf("Failed to SetLogger. err: %w", err)
 	}
