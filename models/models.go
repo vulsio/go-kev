@@ -41,7 +41,7 @@ type KEVuln struct {
 	VulnerabilityName string     `gorm:"type:varchar(255)" json:"vulnerabilityName"`
 	DateAdded         KEVulnTime `gorm:"type:time" json:"dateAdded"`
 	ShortDescription  string     `gorm:"type:text" json:"shortDescription"`
-	RequiredAction    string     `gorm:"type:varchar(255)" json:"requiredAction"`
+	RequiredAction    string     `gorm:"type:text" json:"requiredAction"`
 	DueDate           KEVulnTime `gorm:"type:time" json:"dueDate"`
 }
 
