@@ -30,8 +30,7 @@ REVISION := $(shell git rev-parse --short HEAD)
 BUILDTIME := $(shell date "+%Y%m%d_%H%M%S")
 LDFLAGS := -X 'github.com/vulsio/go-kev/config.Version=$(VERSION)' \
 	-X 'github.com/vulsio/go-kev/config.Revision=$(REVISION)'
-GO := GO111MODULE=on go
-GO_OFF := GO111MODULE=off go
+GO := CGO_ENABLED=0 go
 
 all: build test
 
@@ -42,11 +41,11 @@ install: main.go
 	$(GO) install -ldflags "$(LDFLAGS)"
 
 lint:
-	$(GO) install github.com/mgechev/revive@latest
+	go install github.com/mgechev/revive@latest
 	revive -config ./.revive.toml -formatter plain $(PKGS)
 
 golangci:
-	$(GO) install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	golangci-lint run
 
 vet:
