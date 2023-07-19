@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/cheggaaa/pb/v3 v3.1.2
-	github.com/glebarez/sqlite v1.8.1-0.20230417114740-1accfe103bf2
+	github.com/glebarez/sqlite v1.9.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/inconshreveable/log15 v3.0.0-testing.5+incompatible
 	github.com/labstack/echo/v4 v4.10.2
@@ -13,8 +13,8 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
-	gorm.io/driver/mysql v1.5.0
-	gorm.io/driver/postgres v1.5.0
+	gorm.io/driver/mysql v1.5.1
+	gorm.io/driver/postgres v1.5.2
 	gorm.io/gorm v1.25.2
 )
 
@@ -26,7 +26,7 @@ require (
 	github.com/elazarl/goproxy v0.0.0-20211114080932-d06c3be7c11b // indirect
 	github.com/fatih/color v1.14.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/glebarez/go-sqlite v1.21.1 // indirect
+	github.com/glebarez/go-sqlite v1.21.2 // indirect
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
@@ -35,7 +35,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgx/v5 v5.3.0 // indirect
+	github.com/jackc/pgx/v5 v5.3.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
@@ -67,6 +67,6 @@ require (
 	modernc.org/libc v1.22.5 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
-	modernc.org/sqlite v1.22.0 // indirect
+	modernc.org/sqlite v1.23.1 // indirect
 	moul.io/http2curl v1.0.0 // indirect
 )
