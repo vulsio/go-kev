@@ -24,14 +24,15 @@ func (f FetchMeta) OutDated() bool {
 
 // KEVuln : Known Exploited Vulnerabilities
 type KEVuln struct {
-	ID                int64     `json:"-"`
-	CveID             string    `gorm:"type:varchar(255);index:idx_kev_cve_id" json:"cveID"`
-	VendorProject     string    `gorm:"type:varchar(255)" json:"vendorProject"`
-	Product           string    `gorm:"type:varchar(255)" json:"product"`
-	VulnerabilityName string    `gorm:"type:varchar(255)" json:"vulnerabilityName"`
-	DateAdded         time.Time `json:"dateAdded"`
-	ShortDescription  string    `gorm:"type:text" json:"shortDescription"`
-	RequiredAction    string    `gorm:"type:text" json:"requiredAction"`
-	DueDate           time.Time `json:"dueDate"`
-	Notes             string    `gorm:"type:text" json:"notes"`
+	ID                         int64     `json:"-"`
+	CveID                      string    `gorm:"type:varchar(255);index:idx_kev_cve_id" json:"cveID"`
+	VendorProject              string    `gorm:"type:varchar(255)" json:"vendorProject"`
+	Product                    string    `gorm:"type:varchar(255)" json:"product"`
+	VulnerabilityName          string    `gorm:"type:varchar(255)" json:"vulnerabilityName"`
+	DateAdded                  time.Time `json:"dateAdded"`
+	ShortDescription           string    `gorm:"type:text" json:"shortDescription"`
+	RequiredAction             string    `gorm:"type:text" json:"requiredAction"`
+	DueDate                    time.Time `json:"dueDate"`
+	KnownRansomwareCampaignUse string    `gorm:"type:varchar(255)" json:"knownRansomwareCampaignUse"`
+	Notes                      string    `gorm:"type:text" json:"notes"`
 }

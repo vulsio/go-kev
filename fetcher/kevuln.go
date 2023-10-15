@@ -28,15 +28,16 @@ func FetchKEVuln() ([]models.KEVuln, error) {
 	vs := make([]models.KEVuln, 0, len(catalog.Vulnerabilities))
 	for _, v := range catalog.Vulnerabilities {
 		vs = append(vs, models.KEVuln{
-			CveID:             v.CveID,
-			VendorProject:     v.VendorProject,
-			Product:           v.Product,
-			VulnerabilityName: v.VulnerabilityName,
-			DateAdded:         parsedOrDefaultTime("2006-01-02", v.DateAdded),
-			ShortDescription:  v.ShortDescription,
-			RequiredAction:    v.RequiredAction,
-			DueDate:           parsedOrDefaultTime("2006-01-02", v.DueDate),
-			Notes:             v.Notes,
+			CveID:                      v.CveID,
+			VendorProject:              v.VendorProject,
+			Product:                    v.Product,
+			VulnerabilityName:          v.VulnerabilityName,
+			DateAdded:                  parsedOrDefaultTime("2006-01-02", v.DateAdded),
+			ShortDescription:           v.ShortDescription,
+			RequiredAction:             v.RequiredAction,
+			DueDate:                    parsedOrDefaultTime("2006-01-02", v.DueDate),
+			KnownRansomwareCampaignUse: v.KnownRansomwareCampaignUse,
+			Notes:                      v.Notes,
 		})
 	}
 
