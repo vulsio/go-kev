@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"time"
 
@@ -190,7 +192,12 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 	}
 
 	log15.Info("Inserting Known Exploited Vulnerabilities...")
-	bar := pb.StartNew(len(records))
+	bar := pb.StartNew(len(records)).SetWriter(func() io.Writer {
+		if viper.GetBool("log-json") {
+			return io.Discard
+		}
+		return os.Stderr
+	}())
 	for idx := range chunkSlice(len(records), batchSize) {
 		pipe := r.conn.Pipeline()
 		for _, record := range records[idx.From:idx.To] {
