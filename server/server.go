@@ -57,11 +57,11 @@ func getVulnByCveID(driver db.DB) echo.HandlerFunc {
 		cve := context.Param("cve")
 		log15.Debug("Params", "CVE", cve)
 
-		vuln, err := driver.GetKEVulnByCveID(cve)
+		r, err := driver.GetKEVByCveID(cve)
 		if err != nil {
-			return xerrors.Errorf("Failed to get Vuln Info by CVE. err: %w", err)
+			return xerrors.Errorf("Failed to get KEV Info by CVE. err: %w", err)
 		}
-		return context.JSON(http.StatusOK, vuln)
+		return context.JSON(http.StatusOK, r)
 	}
 }
 
@@ -77,10 +77,10 @@ func getVulnByMultiCveID(driver db.DB) echo.HandlerFunc {
 		}
 		log15.Debug("Params", "CVEIDs", cveIDs.Args)
 
-		vulns, err := driver.GetKEVulnByMultiCveID(cveIDs.Args)
+		r, err := driver.GetKEVByMultiCveID(cveIDs.Args)
 		if err != nil {
-			return xerrors.Errorf("Failed to get Vuln Info by CVE. err: %w", err)
+			return xerrors.Errorf("Failed to get KEV Info by CVE. err: %w", err)
 		}
-		return context.JSON(http.StatusOK, vulns)
+		return context.JSON(http.StatusOK, r)
 	}
 }
