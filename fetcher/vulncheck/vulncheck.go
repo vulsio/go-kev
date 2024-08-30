@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"path/filepath"
+	"time"
 
 	"golang.org/x/xerrors"
 
@@ -70,9 +71,14 @@ func Fetch() ([]models.VulnCheck, error) {
 				xs := make([]models.VulnCheckXDB, 0, len(v.VulnCheckXDB))
 				for _, x := range v.VulnCheckXDB {
 					xs = append(xs, models.VulnCheckXDB{
-						XDBID:       x.XDBID,
-						XDBURL:      x.XDBURL,
-						DateAdded:   x.DateAdded,
+						XDBID:  x.XDBID,
+						XDBURL: x.XDBURL,
+						DateAdded: func() time.Time {
+							if x.DateAdded.Equal(time.Time{}) {
+								return time.Date(1000, time.January, 1, 0, 0, 0, 0, time.UTC)
+							}
+							return x.DateAdded
+						}(),
 						ExploitType: x.ExploitType,
 						CloneSSHURL: x.CloneSSHURL,
 					})
@@ -83,16 +89,36 @@ func Fetch() ([]models.VulnCheck, error) {
 				es := make([]models.VulnCheckReportedExploitation, 0, len(v.VulnCheckReportedExploitation))
 				for _, e := range v.VulnCheckReportedExploitation {
 					es = append(es, models.VulnCheckReportedExploitation{
-						URL:       e.URL,
-						DateAdded: e.DateAdded,
+						URL: e.URL,
+						DateAdded: func() time.Time {
+							if e.DateAdded.Equal(time.Time{}) {
+								return time.Date(1000, time.January, 1, 0, 0, 0, 0, time.UTC)
+							}
+							return e.DateAdded
+						}(),
 					})
 				}
 				return es
 			}(),
 
-			DueDate:       v.DueDate,
-			CisaDateAdded: v.CisaDateAdded,
-			DateAdded:     v.DateAdded,
+			DueDate: func() *time.Time {
+				if v.DueDate == nil || (*v.DueDate).Equal(time.Time{}) {
+					return nil
+				}
+				return v.DueDate
+			}(),
+			CisaDateAdded: func() *time.Time {
+				if v.CisaDateAdded == nil || (*v.CisaDateAdded).Equal(time.Time{}) {
+					return nil
+				}
+				return v.CisaDateAdded
+			}(),
+			DateAdded: func() time.Time {
+				if v.DateAdded.Equal(time.Time{}) {
+					return time.Date(1000, time.January, 1, 0, 0, 0, 0, time.UTC)
+				}
+				return v.DateAdded
+			}(),
 		})
 	}
 	return vs, nil
