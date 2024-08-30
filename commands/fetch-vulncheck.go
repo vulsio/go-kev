@@ -9,23 +9,24 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/vulsio/go-kev/db"
-	fetcher "github.com/vulsio/go-kev/fetcher/kevuln"
+	fetcher "github.com/vulsio/go-kev/fetcher/vulncheck"
 	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/utils"
 )
 
-var fetchCatalogCmd = &cobra.Command{
-	Use:   "kevuln",
-	Short: "Fetch the data of known exploited vulnerabilities catalog by CISA",
-	Long:  `Fetch the data of known exploited vulnerabilities catalog by CISA`,
-	RunE:  fetchKEVuln,
+var fetchVulnCheckCmd = &cobra.Command{
+	Use:   "vulncheck <vuls-data-raw-vulncheck-kev directory>",
+	Short: "Fetch the data of known exploited vulnerabilities catalog by VulnCheck (https://vulncheck.com/kev)",
+	Long:  `Fetch the data of known exploited vulnerabilities catalog by VulnCheck (https://vulncheck.com/kev)`,
+	Args:  cobra.NoArgs,
+	RunE:  fetchVulnCheck,
 }
 
 func init() {
-	fetchCmd.AddCommand(fetchCatalogCmd)
+	fetchCmd.AddCommand(fetchVulnCheckCmd)
 }
 
-func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
+func fetchVulnCheck(_ *cobra.Command, _ []string) (err error) {
 	if err := utils.SetLogger(viper.GetBool("log-to-file"), viper.GetString("log-dir"), viper.GetBool("debug"), viper.GetBool("log-json")); err != nil {
 		return xerrors.Errorf("Failed to SetLogger. err: %w", err)
 	}
@@ -50,14 +51,14 @@ func fetchKEVuln(_ *cobra.Command, _ []string) (err error) {
 		return xerrors.Errorf("Failed to upsert FetchMeta to DB. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
 
-	log15.Info("Fetching Known Exploited Vulnerabilities")
-	var vulns []models.KEVuln
+	log15.Info("Fetching VulnCheck Known Exploited Vulnerabilities")
+	var vulns []models.VulnCheck
 	if vulns, err = fetcher.Fetch(); err != nil {
-		return xerrors.Errorf("Failed to fetch Known Exploited Vulnerabilities. err: %w", err)
+		return xerrors.Errorf("Failed to fetch VulnCheck Known Exploited Vulnerabilities. err: %w", err)
 	}
 
-	log15.Info("Insert Known Exploited Vulnerabilities into go-kev.", "db", driver.Name())
-	if err := driver.InsertKEVulns(vulns); err != nil {
+	log15.Info("Insert VulnCheck Known Exploited Vulnerabilities into go-kev.", "db", driver.Name())
+	if err := driver.InsertVulnCheck(vulns); err != nil {
 		return xerrors.Errorf("Failed to insert. dbpath: %s, err: %w", viper.GetString("dbpath"), err)
 	}
 

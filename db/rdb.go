@@ -141,6 +141,11 @@ func (r *RDBDriver) MigrateDB() error {
 		&models.FetchMeta{},
 
 		&models.KEVuln{},
+
+		&models.VulnCheck{},
+		&models.VulnCheckCVE{},
+		&models.VulnCheckXDB{},
+		&models.VulnCheckReportedExploitation{},
 	); err != nil {
 		switch r.name {
 		case dialectSqlite3:
@@ -163,9 +168,7 @@ func (r *RDBDriver) MigrateDB() error {
 				}
 			}
 		case dialectMysql, dialectPostgreSQL:
-			if err != nil {
-				return xerrors.Errorf("Failed to migrate. err: %w", err)
-			}
+			return xerrors.Errorf("Failed to migrate. err: %w", err)
 		default:
 			return xerrors.Errorf("Not Supported DB dialects. r.name: %s", r.name)
 		}
@@ -261,24 +264,77 @@ func (r *RDBDriver) deleteAndInsertKEVulns(records []models.KEVuln) (err error) 
 	return nil
 }
 
-// GetKEVulnByCveID :
-func (r *RDBDriver) GetKEVulnByCveID(cveID string) ([]models.KEVuln, error) {
-	vuln := []models.KEVuln{}
-	if err := r.conn.Where(&models.KEVuln{CveID: cveID}).Find(&vuln).Error; err != nil {
-		return nil, xerrors.Errorf("Failed to get info by CVE-ID. err: %w", err)
-	}
-	return vuln, nil
+// InsertVulnCheck :
+func (r *RDBDriver) InsertVulnCheck(records []models.VulnCheck) (err error) {
+	log15.Info("Inserting VulnCheck Known Exploited Vulnerabilities...")
+	return r.deleteAndInsertVulnCheck(records)
 }
 
-// GetKEVulnByMultiCveID :
-func (r *RDBDriver) GetKEVulnByMultiCveID(cveIDs []string) (map[string][]models.KEVuln, error) {
-	vuln := map[string][]models.KEVuln{}
-	for _, cveID := range cveIDs {
-		v, err := r.GetKEVulnByCveID(cveID)
-		if err != nil {
-			return nil, err
+func (r *RDBDriver) deleteAndInsertVulnCheck(records []models.VulnCheck) (err error) {
+	bar := pb.StartNew(len(records)).SetWriter(func() io.Writer {
+		if viper.GetBool("log-json") {
+			return io.Discard
 		}
-		vuln[cveID] = v
+		return os.Stderr
+	}())
+	tx := r.conn.Begin()
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		tx.Commit()
+	}()
+
+	// Delete all old records
+	for _, table := range []interface{}{models.VulnCheck{}, models.VulnCheckCVE{}, models.VulnCheckXDB{}, models.VulnCheckReportedExploitation{}} {
+		if err := tx.Session(&gorm.Session{AllowGlobalUpdate: true}).Unscoped().Delete(table).Error; err != nil {
+			return xerrors.Errorf("Failed to delete old records. err: %w", err)
+		}
 	}
-	return vuln, nil
+
+	batchSize := viper.GetInt("batch-size")
+	if batchSize < 1 {
+		return fmt.Errorf("Failed to set batch-size. err: batch-size option is not set properly")
+	}
+
+	for idx := range chunkSlice(len(records), batchSize) {
+		if err = tx.Create(records[idx.From:idx.To]).Error; err != nil {
+			return xerrors.Errorf("Failed to insert. err: %w", err)
+		}
+		bar.Add(idx.To - idx.From)
+	}
+	bar.Finish()
+	log15.Info("CveID Count", "count", len(records))
+	return nil
+}
+
+// GetKEVByCveID :
+func (r *RDBDriver) GetKEVByCveID(cveID string) (Response, error) {
+	var res Response
+	if err := r.conn.Where(&models.KEVuln{CveID: cveID}).Find(&res.CISA).Error; err != nil {
+		return Response{}, xerrors.Errorf("Failed to get CISA info by CVE-ID. err: %w", err)
+	}
+	if err := r.conn.
+		Joins("JOIN vuln_check_cves ON vuln_check_cves.vuln_check_id = vuln_checks.id AND vuln_check_cves.cve_id = ?", cveID).
+		Preload("CVE").
+		Preload("VulnCheckXDB").
+		Preload("VulnCheckReportedExploitation").
+		Find(&res.VulnCheck).Error; err != nil {
+		return Response{}, xerrors.Errorf("Failed to get VulnCheck info by CVE-ID. err: %w", err)
+	}
+	return res, nil
+}
+
+// GetKEVByMultiCveID :
+func (r *RDBDriver) GetKEVByMultiCveID(cveIDs []string) (map[string]Response, error) {
+	m := make(map[string]Response)
+	for _, cveID := range cveIDs {
+		res, err := r.GetKEVByCveID(cveID)
+		if err != nil {
+			return nil, xerrors.Errorf("Failed to get KEV by %s. err: %w", cveID, err)
+		}
+		m[cveID] = res
+	}
+	return m, nil
 }

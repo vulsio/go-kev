@@ -20,13 +20,20 @@ type DB interface {
 	UpsertFetchMeta(*models.FetchMeta) error
 
 	InsertKEVulns([]models.KEVuln) error
-	GetKEVulnByCveID(string) ([]models.KEVuln, error)
-	GetKEVulnByMultiCveID([]string) (map[string][]models.KEVuln, error)
+	InsertVulnCheck([]models.VulnCheck) error
+	GetKEVByCveID(string) (Response, error)
+	GetKEVByMultiCveID([]string) (map[string]Response, error)
 }
 
 // Option :
 type Option struct {
 	RedisTimeout time.Duration
+}
+
+// Response :
+type Response struct {
+	CISA      []models.KEVuln    `json:"cisa,omitempty"`
+	VulnCheck []models.VulnCheck `json:"vulncheck,omitempty"`
 }
 
 // NewDB :

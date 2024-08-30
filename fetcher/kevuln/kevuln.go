@@ -1,4 +1,4 @@
-package fetcher
+package kevuln
 
 import (
 	"encoding/json"
@@ -11,8 +11,8 @@ import (
 	"github.com/vulsio/go-kev/utils"
 )
 
-// FetchKEVuln :
-func FetchKEVuln() ([]models.KEVuln, error) {
+// Fetch :
+func Fetch() ([]models.KEVuln, error) {
 	url := "https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json"
 	log15.Info("Fetching", "URL", url)
 	vulnJSON, err := utils.FetchURL(url)

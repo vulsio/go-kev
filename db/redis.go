@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
@@ -23,26 +24,21 @@ import (
 
 /**
 # Redis Data Structure
-- Strings
-  ┌───┬─────────┬────────┬──────────────────────────────────────────────────┐
-  │NO │  KEY    │ MEMBER │                    PURPOSE                       │
-  └───┴─────────┴────────┴──────────────────────────────────────────────────┘
-  ┌───┬─────────┬────────┬──────────────────────────────────────────────────┐
-  │ 1 │ KEV#DEP │  JSON  │ TO DELETE OUTDATED AND UNNEEDED FIELD AND MEMBER │
-  └───┴─────────┴────────┴──────────────────────────────────────────────────┘
 - Hash
-  ┌───┬────────────────┬───────────────┬──────────────┬──────────────────────────────┐
-  │NO │     KEY        │   FIELD       │     VALUE    │           PURPOSE            │
-  └───┴────────────────┴───────────────┴──────────────┴──────────────────────────────┘
-  ┌───┬────────────────┬───────────────┬──────────────┬──────────────────────────────┐
-  │ 1 │ KEV#CVE#$CVEID │    MD5SUM     │     JSON     │ TO GET VULN FROM CVEID       │
-  ├───┼────────────────┼───────────────┼──────────────┼──────────────────────────────┤
-  │ 2 │ KEV#FETCHMETA  │   Revision    │    string    │ GET Go-KEV Binary Revision   │
-  ├───┼────────────────┼───────────────┼──────────────┼──────────────────────────────┤
-  │ 3 │ KEV#FETCHMETA  │ SchemaVersion │     uint     │ GET Go-KEV Schema Version    │
-  ├───┼────────────────┼───────────────┼──────────────┼──────────────────────────────┤
-  │ 4 │ KEV#FETCHMETA  │ LastFetchedAt │ time.Time    │ GET Go-KEV Last Fetched Time │
-  └───┴────────────────┴───────────────┴──────────────┴──────────────────────────────┘
+  ┌───┬────────────────┬─────────────────────┬───────────┬──────────────────────────────────────────────────┐
+  │NO │      KEY       │       FIELD         │   VALUE   │                     PURPOSE                      │
+  └───┴────────────────┴─────────────────────┴───────────┴──────────────────────────────────────────────────┘
+  ┌───┬────────────────┬─────────────────────┬───────────┬──────────────────────────────────────────────────┐
+  │ 1 │ KEV#CVE#$CVEID │ <fetch type>:MD5SUM │   JSON    │ TO GET VULN FROM CVEID                           │
+  ├───┼────────────────┼─────────────────────┼───────────┼──────────────────────────────────────────────────┤
+  │ 2 │ KEV#DEP        │   CISA/VulnCheck    │   JSON    │ TO DELETE OUTDATED AND UNNEEDED FIELD AND MEMBER │
+  ├───┼────────────────┼─────────────────────┼───────────┼──────────────────────────────────────────────────┤
+  │ 3 │ KEV#FETCHMETA  │       Revision      │  string   │ GET Go-KEV Binary Revision                       │
+  ├───┼────────────────┼─────────────────────┼───────────┼──────────────────────────────────────────────────┤
+  │ 4 │ KEV#FETCHMETA  │    SchemaVersion    │   uint    │ GET Go-KEV Schema Version                        │
+  ├───┼────────────────┼─────────────────────┼───────────┼──────────────────────────────────────────────────┤
+  │ 5 │ KEV#FETCHMETA  │    LastFetchedAt    │ time.Time │ GET Go-KEV Last Fetched Time                     │
+  └───┴────────────────┴─────────────────────┴───────────┴──────────────────────────────────────────────────┘
 **/
 
 const (
@@ -50,6 +46,9 @@ const (
 	cveIDKeyFormat = "KEV#CVE#%s"
 	depKey         = "KEV#DEP"
 	fetchMetaKey   = "KEV#FETCHMETA"
+
+	kevulnType    = "CISA"
+	vulncheckType = "VulnCheck"
 )
 
 // RedisDriver is Driver for Redis
@@ -177,14 +176,33 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 		return fmt.Errorf("Failed to set batch-size. err: batch-size option is not set properly")
 	}
 
-	// newDeps, oldDeps: {"CVEID": {"HashSum(CVEJSON)": {}}}
+	// newDeps, oldDeps: {"CVEID": {"CISA:HashSum(CVEJSON)": {}}}
 	newDeps := map[string]map[string]struct{}{}
-	oldDepsStr, err := r.conn.Get(ctx, depKey).Result()
+	oldDepsStr := "{}"
+	t, err := r.conn.Type(ctx, depKey).Result()
 	if err != nil {
-		if !errors.Is(err, redis.Nil) {
+		return xerrors.Errorf("Failed to Type key: %s. err: %w", depKey, err)
+	}
+	switch t {
+	case "string":
+		oldDepsStr, err = r.conn.Get(ctx, depKey).Result()
+		if err != nil {
 			return xerrors.Errorf("Failed to Get key: %s. err: %w", depKey, err)
 		}
-		oldDepsStr = "{}"
+		if _, err := r.conn.Del(ctx, depKey).Result(); err != nil {
+			return xerrors.Errorf("Failed to Del key: %s. err: %w", depKey, err)
+		}
+	case "hash":
+		oldDepsStr, err = r.conn.HGet(ctx, depKey, kevulnType).Result()
+		if err != nil {
+			if !errors.Is(err, redis.Nil) {
+				return xerrors.Errorf("Failed to Get key: %s, field: %s. err: %w", depKey, kevulnType, err)
+			}
+			oldDepsStr = "{}"
+		}
+	case "none":
+	default:
+		return xerrors.Errorf("unexpected %s key type. expected: %q, actual: %q", depKey, []string{"string", "hash", "none"}, t)
 	}
 	var oldDeps map[string]map[string]struct{}
 	if err := json.Unmarshal([]byte(oldDepsStr), &oldDeps); err != nil {
@@ -206,7 +224,7 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 				return xerrors.Errorf("Failed to marshal json. err: %w", err)
 			}
 
-			hash := fmt.Sprintf("%x", md5.Sum(j))
+			hash := fmt.Sprintf("%s:%x", kevulnType, md5.Sum(j))
 			_ = pipe.HSet(ctx, fmt.Sprintf(cveIDKeyFormat, record.CveID), hash, string(j))
 
 			if _, ok := newDeps[record.CveID]; !ok {
@@ -239,7 +257,7 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 	if err != nil {
 		return xerrors.Errorf("Failed to Marshal JSON. err: %w", err)
 	}
-	_ = pipe.Set(ctx, depKey, string(newDepsJSON), 0)
+	_ = pipe.HSet(ctx, depKey, kevulnType, string(newDepsJSON))
 	if _, err := pipe.Exec(ctx); err != nil {
 		return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
 	}
@@ -248,30 +266,151 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 	return nil
 }
 
-// GetKEVulnByCveID :
-func (r *RedisDriver) GetKEVulnByCveID(cveID string) ([]models.KEVuln, error) {
-	results, err := r.conn.HGetAll(context.Background(), fmt.Sprintf(cveIDKeyFormat, cveID)).Result()
-	if err != nil {
-		return nil, err
+// InsertVulnCheck :
+func (r *RedisDriver) InsertVulnCheck(records []models.VulnCheck) (err error) {
+	ctx := context.Background()
+	batchSize := viper.GetInt("batch-size")
+	if batchSize < 1 {
+		return fmt.Errorf("Failed to set batch-size. err: batch-size option is not set properly")
 	}
 
-	vulns := []models.KEVuln{}
-	for _, s := range results {
-		var vuln models.KEVuln
-		if err := json.Unmarshal([]byte(s), &vuln); err != nil {
-			return nil, err
-		}
-		vulns = append(vulns, vuln)
+	// newDeps, oldDeps: {"CVEID": {"VulnCheck:HashSum(CVEJSON)": {}}}
+	newDeps := map[string]map[string]struct{}{}
+	oldDepsStr := "{}"
+	t, err := r.conn.Type(ctx, depKey).Result()
+	if err != nil {
+		return xerrors.Errorf("Failed to Type key: %s. err: %w", depKey, err)
 	}
-	return vulns, nil
+	switch t {
+	case "string":
+		depsStr, err := r.conn.Get(ctx, depKey).Result()
+		if err != nil {
+			return xerrors.Errorf("Failed to Get key: %s. err: %w", depKey, err)
+		}
+		if _, err := r.conn.Del(ctx, depKey).Result(); err != nil {
+			return xerrors.Errorf("Failed to Del key: %s. err: %w", depKey, err)
+		}
+		if _, err := r.conn.HSet(ctx, depKey, kevulnType, depsStr).Result(); err != nil {
+			return xerrors.Errorf("Failed to HSet key: %s, field: %s. err: %w", depKey, kevulnType, err)
+		}
+	case "hash":
+		oldDepsStr, err = r.conn.HGet(ctx, depKey, vulncheckType).Result()
+		if err != nil {
+			if !errors.Is(err, redis.Nil) {
+				return xerrors.Errorf("Failed to Get key: %s, field: %s. err: %w", depKey, vulncheckType, err)
+			}
+			oldDepsStr = "{}"
+		}
+	case "none":
+	default:
+		return xerrors.Errorf("unexpected %s key type. expected: %q, actual: %q", depKey, []string{"string", "hash", "none"}, t)
+	}
+	var oldDeps map[string]map[string]struct{}
+	if err := json.Unmarshal([]byte(oldDepsStr), &oldDeps); err != nil {
+		return xerrors.Errorf("Failed to unmarshal JSON. err: %w", err)
+	}
+
+	log15.Info("Inserting VulnCheck Known Exploited Vulnerabilities...")
+	bar := pb.StartNew(len(records)).SetWriter(func() io.Writer {
+		if viper.GetBool("log-json") {
+			return io.Discard
+		}
+		return os.Stderr
+	}())
+	for idx := range chunkSlice(len(records), batchSize) {
+		pipe := r.conn.Pipeline()
+		for _, record := range records[idx.From:idx.To] {
+			j, err := json.Marshal(record)
+			if err != nil {
+				return xerrors.Errorf("Failed to marshal json. err: %w", err)
+			}
+
+			hash := fmt.Sprintf("%s:%x", vulncheckType, md5.Sum(j))
+			for _, c := range record.CVE {
+				_ = pipe.HSet(ctx, fmt.Sprintf(cveIDKeyFormat, c.CveID), hash, string(j))
+
+				if _, ok := newDeps[c.CveID]; !ok {
+					newDeps[c.CveID] = map[string]struct{}{}
+				}
+				if _, ok := newDeps[c.CveID][hash]; !ok {
+					newDeps[c.CveID][hash] = struct{}{}
+				}
+				if _, ok := oldDeps[c.CveID]; ok {
+					delete(oldDeps[c.CveID], hash)
+					if len(oldDeps[c.CveID]) == 0 {
+						delete(oldDeps, c.CveID)
+					}
+				}
+			}
+		}
+		if _, err := pipe.Exec(ctx); err != nil {
+			return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
+		}
+		bar.Add(idx.To - idx.From)
+	}
+	bar.Finish()
+
+	pipe := r.conn.Pipeline()
+	for cveID, hashes := range oldDeps {
+		for hash := range hashes {
+			_ = pipe.HDel(ctx, fmt.Sprintf(cveIDKeyFormat, cveID), hash)
+		}
+	}
+	newDepsJSON, err := json.Marshal(newDeps)
+	if err != nil {
+		return xerrors.Errorf("Failed to Marshal JSON. err: %w", err)
+	}
+	_ = pipe.HSet(ctx, depKey, vulncheckType, string(newDepsJSON))
+	if _, err := pipe.Exec(ctx); err != nil {
+		return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
+	}
+
+	log15.Info("CveID Count", "count", len(records))
+	return nil
 }
 
-// GetKEVulnByMultiCveID :
-func (r *RedisDriver) GetKEVulnByMultiCveID(cveIDs []string) (map[string][]models.KEVuln, error) {
+// GetKEVByCveID :
+func (r *RedisDriver) GetKEVByCveID(cveID string) (Response, error) {
+	results, err := r.conn.HGetAll(context.Background(), fmt.Sprintf(cveIDKeyFormat, cveID)).Result()
+	if err != nil {
+		return Response{}, xerrors.Errorf("Failed to HGetAll key: %s. err: %w", fmt.Sprintf(cveIDKeyFormat, cveID), err)
+	}
+
+	var res Response
+	for f, s := range results {
+		switch {
+		case strings.HasPrefix(f, kevulnType):
+			var v models.KEVuln
+			if err := json.Unmarshal([]byte(s), &v); err != nil {
+				return Response{}, xerrors.Errorf("Failed to unmarshal json. key: %s, field: %s. err: %w", fmt.Sprintf(cveIDKeyFormat, cveID), f, err)
+			}
+			res.CISA = append(res.CISA, v)
+		case strings.HasPrefix(f, vulncheckType):
+			var v models.VulnCheck
+			if err := json.Unmarshal([]byte(s), &v); err != nil {
+				return Response{}, xerrors.Errorf("Failed to unmarshal json. key: %s, field: %s. err: %w", fmt.Sprintf(cveIDKeyFormat, cveID), f, err)
+			}
+			res.VulnCheck = append(res.VulnCheck, v)
+		default:
+			if f != fmt.Sprintf("%x", md5.Sum([]byte(s))) {
+				return Response{}, xerrors.Errorf("unexpected %s field. expected: %q, actual: %q", fmt.Sprintf(cveIDKeyFormat, cveID), []string{fmt.Sprintf("%s:<MD5SUM>", kevulnType), fmt.Sprintf("%s:<MD5SUM>", vulncheckType)}, f)
+			}
+			var v models.KEVuln
+			if err := json.Unmarshal([]byte(s), &v); err != nil {
+				return Response{}, xerrors.Errorf("Failed to unmarshal json. key: %s, field: %s. err: %w", fmt.Sprintf(cveIDKeyFormat, cveID), f, err)
+			}
+			res.CISA = append(res.CISA, v)
+		}
+	}
+	return res, nil
+}
+
+// GetKEVByMultiCveID :
+func (r *RedisDriver) GetKEVByMultiCveID(cveIDs []string) (map[string]Response, error) {
 	ctx := context.Background()
 
 	if len(cveIDs) == 0 {
-		return map[string][]models.KEVuln{}, nil
+		return map[string]Response{}, nil
 	}
 
 	m := map[string]*redis.StringStringMapCmd{}
@@ -280,25 +419,43 @@ func (r *RedisDriver) GetKEVulnByMultiCveID(cveIDs []string) (map[string][]model
 		m[cveID] = pipe.HGetAll(ctx, fmt.Sprintf(cveIDKeyFormat, cveID))
 	}
 	if _, err := pipe.Exec(ctx); err != nil {
-		return nil, err
+		return nil, xerrors.Errorf("Failed to exec pipeline. err: %w", err)
 	}
 
-	vulns := map[string][]models.KEVuln{}
+	rm := make(map[string]Response)
 	for cveID, cmd := range m {
 		results, err := cmd.Result()
 		if err != nil {
-			return nil, err
+			return nil, xerrors.Errorf("Failed to HGetAll. err: %w", err)
 		}
 
-		var vs []models.KEVuln
-		for _, s := range results {
-			var v models.KEVuln
-			if err := json.Unmarshal([]byte(s), &v); err != nil {
-				return nil, err
+		var res Response
+		for f, s := range results {
+			switch {
+			case strings.HasPrefix(f, kevulnType):
+				var v models.KEVuln
+				if err := json.Unmarshal([]byte(s), &v); err != nil {
+					return nil, xerrors.Errorf("Failed to unmarshal json. key: %s, field: %s. err: %w", fmt.Sprintf(cveIDKeyFormat, cveID), f, err)
+				}
+				res.CISA = append(res.CISA, v)
+			case strings.HasPrefix(f, vulncheckType):
+				var v models.VulnCheck
+				if err := json.Unmarshal([]byte(s), &v); err != nil {
+					return nil, xerrors.Errorf("Failed to unmarshal json. key: %s, field: %s. err: %w", fmt.Sprintf(cveIDKeyFormat, cveID), f, err)
+				}
+				res.VulnCheck = append(res.VulnCheck, v)
+			default:
+				if f != fmt.Sprintf("%x", md5.Sum([]byte(s))) {
+					return nil, xerrors.Errorf("unexpected %s field. expected: %q, actual: %q", fmt.Sprintf(cveIDKeyFormat, cveID), []string{fmt.Sprintf("%s:<MD5SUM>", kevulnType), fmt.Sprintf("%s:<MD5SUM>", vulncheckType)}, f)
+				}
+				var v models.KEVuln
+				if err := json.Unmarshal([]byte(s), &v); err != nil {
+					return nil, xerrors.Errorf("Failed to unmarshal json. key: %s, field: %s. err: %w", fmt.Sprintf(cveIDKeyFormat, cveID), f, err)
+				}
+				res.CISA = append(res.CISA, v)
 			}
-			vs = append(vs, v)
 		}
-		vulns[cveID] = vs
+		rm[cveID] = res
 	}
-	return vulns, nil
+	return rm, nil
 }
