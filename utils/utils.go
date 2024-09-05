@@ -71,3 +71,7 @@ func FetchURL(url string) ([]byte, error) {
 	}
 	return body, nil
 }
+
+func ToPtr[T any](v T) *T {
+	return &v
+}
