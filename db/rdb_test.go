@@ -137,7 +137,9 @@ func TestRDBDriver_GetKEVByMultiCveID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to new sqlite3 driver. err: %s", err)
 	}
-	defer driver.CloseDB()
+	defer func() {
+		_ = driver.CloseDB()
+	}()
 
 	if err := prepareTestData(driver); err != nil {
 		t.Fatalf("Failed to prepare testdata of KEV. err: %s", err)

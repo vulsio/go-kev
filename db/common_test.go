@@ -115,10 +115,10 @@ func prepareTestData(driver db.DB) error {
 	}
 
 	if err := driver.InsertKEVulns(testKEVs); err != nil {
-		return err
+		return xerrors.Errorf("Failed to insert KEVulns. err: %w", err)
 	}
 	if err := driver.InsertVulnCheck(testVulnChecks); err != nil {
-		return err
+		return xerrors.Errorf("Failed to insert VulnCheck. err: %w", err)
 	}
 	return nil
 }
