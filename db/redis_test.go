@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"golang.org/x/xerrors"
+	
 	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/utils"
-	"golang.org/x/xerrors"
 )
 
 func setupRedis() (*miniredis.Miniredis, DB, error) {
