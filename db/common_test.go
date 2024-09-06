@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
+
 	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/utils"
 )
