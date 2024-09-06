@@ -5,11 +5,12 @@ import (
 
 	"github.com/spf13/viper"
 
+	"github.com/vulsio/go-kev/db"
 	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/utils"
 )
 
-func prepareTestData(driver DB) error {
+func prepareTestData(driver db.DB) error {
 	viper.Set("threads", 1)
 	viper.Set("batch-size", 1)
 

@@ -1,30 +1,32 @@
 package db_test
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"golang.org/x/xerrors"
-	
+
+	"github.com/vulsio/go-kev/db"
 	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/utils"
 )
 
-func setupRedis() (*miniredis.Miniredis, DB, error) {
+func setupRedis() (*miniredis.Miniredis, db.DB, error) {
 	s, err := miniredis.Run()
 	if err != nil {
 		return nil, nil, xerrors.Errorf("Failed to run miniredis: %w", err)
 	}
-	driver, err := NewDB("redis", fmt.Sprintf("redis://%s", s.Addr()), false, Option{})
+	driver, err := db.NewDB("redis", fmt.Sprintf("redis://%s", s.Addr()), false, db.Option{})
 	if err != nil {
 		return nil, nil, xerrors.Errorf("Failed to new db: %w", err)
 	}
 	return s, driver, nil
 }
 
-func teardownRedis(s *miniredis.Miniredis, driver DB) {
+func teardownRedis(s *miniredis.Miniredis, driver db.DB) {
 	s.Close()
 	_ = driver.CloseDB()
 }
@@ -43,12 +45,12 @@ func TestRedisDriver_GetKEVByMultiCveID(t *testing.T) {
 	testdata := []struct {
 		name     string
 		cveIDs   []string
-		expected map[string]Response
+		expected map[string]db.Response
 	}{
 		{
 			name:   "single cveID",
 			cveIDs: []string{"CVE-2021-27104"},
-			expected: map[string]Response{
+			expected: map[string]db.Response{
 				"CVE-2021-27104": {
 					[]models.KEVuln{
 						{
