@@ -1,4 +1,4 @@
-package db
+package db_test
 
 import (
 	"reflect"
@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/alicebob/miniredis/v2"
+	"golang.org/x/xerrors"
+	
 	"github.com/vulsio/go-kev/models"
 	"github.com/vulsio/go-kev/utils"
-	"golang.org/x/xerrors"
 )
 
 func setupRedis() (*miniredis.Miniredis, DB, error) {
@@ -16,7 +17,7 @@ func setupRedis() (*miniredis.Miniredis, DB, error) {
 	if err != nil {
 		return nil, nil, xerrors.Errorf("Failed to run miniredis: %w", err)
 	}
-	driver, err := NewDB("redis", "redis://"+s.Addr(), false, Option{})
+	driver, err := NewDB("redis", fmt.Sprintf("redis://%s", s.Addr()), false, Option{})
 	if err != nil {
 		return nil, nil, xerrors.Errorf("Failed to new db: %w", err)
 	}
@@ -28,15 +29,15 @@ func teardownRedis(s *miniredis.Miniredis, driver DB) {
 	_ = driver.CloseDB()
 }
 
-func TestGetKEVByMultiCveID(t *testing.T) {
+func TestRedisDriver_GetKEVByMultiCveID(t *testing.T) {
 	t.Parallel()
 	s, driver, err := setupRedis()
 	if err != nil {
-		t.Errorf("Failed to prepare redis: %s", err)
+		t.Fatalf("Failed to prepare redis: %s", err)
 	}
 	defer teardownRedis(s, driver)
 	if err := prepareTestData(driver); err != nil {
-		t.Errorf("Failed to prepare testdata of KEVulns: %s", err)
+		t.Fatalf("Failed to prepare testdata of KEV: %s", err)
 	}
 
 	testdata := []struct {
