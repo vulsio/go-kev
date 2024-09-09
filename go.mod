@@ -6,8 +6,8 @@ require (
 	github.com/alicebob/miniredis/v2 v2.33.0
 	github.com/cheggaaa/pb/v3 v3.1.5
 	github.com/glebarez/sqlite v1.11.0
-	github.com/google/go-cmp v0.6.0
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/google/go-cmp v0.6.0
 	github.com/inconshreveable/log15 v3.0.0-testing.5+incompatible
 	github.com/labstack/echo/v4 v4.12.0
 	github.com/mitchellh/go-homedir v1.1.0
@@ -17,7 +17,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2
 	gorm.io/driver/mysql v1.5.5
 	gorm.io/driver/postgres v1.5.7
-	gorm.io/gorm v1.25.7
+	gorm.io/gorm v1.25.12
 )
 
 require (
