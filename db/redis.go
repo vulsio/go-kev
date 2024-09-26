@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -216,9 +217,9 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 		}
 		return os.Stderr
 	}())
-	for idx := range chunkSlice(len(records), batchSize) {
+	for chunk := range slices.Chunk(records, batchSize) {
 		pipe := r.conn.Pipeline()
-		for _, record := range records[idx.From:idx.To] {
+		for _, record := range chunk {
 			j, err := json.Marshal(record)
 			if err != nil {
 				return xerrors.Errorf("Failed to marshal json. err: %w", err)
@@ -243,7 +244,7 @@ func (r *RedisDriver) InsertKEVulns(records []models.KEVuln) (err error) {
 		if _, err := pipe.Exec(ctx); err != nil {
 			return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
 		}
-		bar.Add(idx.To - idx.From)
+		bar.Add(len(chunk))
 	}
 	bar.Finish()
 
@@ -317,9 +318,9 @@ func (r *RedisDriver) InsertVulnCheck(records []models.VulnCheck) (err error) {
 		}
 		return os.Stderr
 	}())
-	for idx := range chunkSlice(len(records), batchSize) {
+	for chunk := range slices.Chunk(records, batchSize) {
 		pipe := r.conn.Pipeline()
-		for _, record := range records[idx.From:idx.To] {
+		for _, record := range chunk {
 			j, err := json.Marshal(record)
 			if err != nil {
 				return xerrors.Errorf("Failed to marshal json. err: %w", err)
@@ -346,7 +347,7 @@ func (r *RedisDriver) InsertVulnCheck(records []models.VulnCheck) (err error) {
 		if _, err := pipe.Exec(ctx); err != nil {
 			return xerrors.Errorf("Failed to exec pipeline. err: %w", err)
 		}
-		bar.Add(idx.To - idx.From)
+		bar.Add(len(chunk))
 	}
 	bar.Finish()
 

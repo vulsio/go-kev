@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
@@ -253,11 +254,11 @@ func (r *RDBDriver) deleteAndInsertKEVulns(records []models.KEVuln) (err error) 
 		return fmt.Errorf("Failed to set batch-size. err: batch-size option is not set properly")
 	}
 
-	for idx := range chunkSlice(len(records), batchSize) {
-		if err = tx.Create(records[idx.From:idx.To]).Error; err != nil {
+	for chunk := range slices.Chunk(records, batchSize) {
+		if err = tx.Create(chunk).Error; err != nil {
 			return xerrors.Errorf("Failed to insert. err: %w", err)
 		}
-		bar.Add(idx.To - idx.From)
+		bar.Add(len(chunk))
 	}
 	bar.Finish()
 	log15.Info("CveID Count", "count", len(records))
@@ -298,11 +299,11 @@ func (r *RDBDriver) deleteAndInsertVulnCheck(records []models.VulnCheck) (err er
 		return fmt.Errorf("Failed to set batch-size. err: batch-size option is not set properly")
 	}
 
-	for idx := range chunkSlice(len(records), batchSize) {
-		if err = tx.Create(records[idx.From:idx.To]).Error; err != nil {
+	for chunk := range slices.Chunk(records, batchSize) {
+		if err = tx.Create(chunk).Error; err != nil {
 			return xerrors.Errorf("Failed to insert. err: %w", err)
 		}
-		bar.Add(idx.To - idx.From)
+		bar.Add(len(chunk))
 	}
 	bar.Finish()
 	log15.Info("CveID Count", "count", len(records))
