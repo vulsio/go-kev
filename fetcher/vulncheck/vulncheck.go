@@ -2,51 +2,56 @@ package vulncheck
 
 import (
 	"archive/tar"
-	"bytes"
-	"compress/gzip"
+	"context"
 	"encoding/json"
 	"io"
+	"io/fs"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
+	"github.com/klauspost/compress/zstd"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
+	"oras.land/oras-go/v2"
+	"oras.land/oras-go/v2/registry/remote"
 
 	"github.com/vulsio/go-kev/models"
-	"github.com/vulsio/go-kev/utils"
 )
 
 // Fetch :
 func Fetch() ([]models.VulnCheck, error) {
-	bs, err := utils.FetchURL("https://github.com/vulsio/vuls-data-raw-vulncheck-kev/archive/refs/heads/main.tar.gz")
+	dir, err := os.MkdirTemp("", "go-kev")
 	if err != nil {
-		return nil, xerrors.Errorf("Failed to fetch vulsio/vuls-data-raw-vulncheck-kev. err: %w", err)
+		return nil, xerrors.Errorf("Failed to create temp directory. err: %w", err)
+	}
+	defer os.RemoveAll(dir)
+
+	if err := fetch(dir); err != nil {
+		return nil, xerrors.Errorf("Failed to fetch vuls-data-raw-vulncheck-kev. err: %w", err)
 	}
 
 	var vs []models.VulnCheck
 
-	gr, err := gzip.NewReader(bytes.NewReader(bs))
-	if err != nil {
-		return nil, xerrors.Errorf("Failed to new gzip reader. err: %w", err)
-	}
-	defer gr.Close()
-
-	tr := tar.NewReader(gr)
-	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
-			break
-		}
+	if err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil, xerrors.Errorf("Failed to next tar reader. err: %w", err)
+			return err
 		}
 
-		if hdr.FileInfo().IsDir() || filepath.Ext(hdr.Name) != ".json" {
-			continue
+		if d.IsDir() || filepath.Ext(path) != ".json" {
+			return nil
 		}
+
+		f, err := os.Open(path)
+		if err != nil {
+			return xerrors.Errorf("Failed to open %s. err: %w", path, err)
+		}
+		defer f.Close()
 
 		var v vulncheck
-		if err := json.NewDecoder(tr).Decode(&v); err != nil {
-			return nil, xerrors.Errorf("Failed to decode %s", hdr.Name)
+		if err := json.NewDecoder(f).Decode(&v); err != nil {
+			return xerrors.Errorf("Failed to decode %s", path)
 		}
 
 		vs = append(vs, models.VulnCheck{
@@ -120,6 +125,101 @@ func Fetch() ([]models.VulnCheck, error) {
 				return v.DateAdded
 			}(),
 		})
+
+		return nil
+	}); err != nil {
+		return nil, xerrors.Errorf("Failed to walk %s. err: %w", dir, err)
 	}
+
 	return vs, nil
+}
+
+func fetch(dir string) error {
+	ctx := context.TODO()
+	repo, err := remote.NewRepository("ghcr.io/vulsio/vuls-data-db:vuls-data-raw-vulncheck-kev")
+	if err != nil {
+		return xerrors.Errorf("Failed to create client for ghcr.io/vulsio/vuls-data-db:vuls-data-raw-vulncheck-kev. err: %w", err)
+	}
+
+	_, r, err := oras.Fetch(ctx, repo, repo.Reference.Reference, oras.DefaultFetchOptions)
+	if err != nil {
+		return xerrors.Errorf("Failed to fetch manifest. err: %w", err)
+	}
+	defer r.Close()
+
+	var manifest ocispec.Manifest
+	if err := json.NewDecoder(r).Decode(&manifest); err != nil {
+		return xerrors.Errorf("Failed to decode manifest. err: %w", err)
+	}
+
+	l := func() *ocispec.Descriptor {
+		for _, l := range manifest.Layers {
+			if l.MediaType == "application/vnd.vulsio.vuls-data-db.dotgit.layer.v1.tar+zstd" {
+				return &l
+			}
+		}
+		return nil
+	}()
+	if l == nil {
+		return xerrors.Errorf("Failed to find digest and filename from layers, actual layers: %#v", manifest.Layers)
+	}
+
+	r, err = repo.Fetch(ctx, *l)
+	if err != nil {
+		return xerrors.Errorf("Failed to fetch content. err: %w", err)
+	}
+	defer r.Close()
+
+	zr, err := zstd.NewReader(r)
+	if err != nil {
+		return xerrors.Errorf("Failed to new zstd reader. err: %w", err)
+	}
+	defer zr.Close()
+
+	tr := tar.NewReader(zr)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return xerrors.Errorf("Failed to next tar reader. err: %w", err)
+		}
+
+		p := filepath.Join(dir, hdr.Name)
+
+		switch hdr.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(p, 0755); err != nil {
+				return xerrors.Errorf("Failed to mkdir %s. err: %w", p, err)
+			}
+		case tar.TypeReg:
+			if err := os.MkdirAll(filepath.Dir(p), 0755); err != nil {
+				return xerrors.Errorf("Failed to mkdir %s. err: %w", p, err)
+			}
+
+			if err := func() error {
+				f, err := os.Create(p)
+				if err != nil {
+					return xerrors.Errorf("Failed to create %s. err: %w", p, err)
+				}
+				defer f.Close()
+
+				if _, err := io.Copy(f, tr); err != nil {
+					return xerrors.Errorf("Failed to copy to %s. err: %w", p, err)
+				}
+
+				return nil
+			}(); err != nil {
+				return xerrors.Errorf("Failed to create %s. err: %w", p, err)
+			}
+		}
+	}
+
+	cmd := exec.Command("git", "-C", filepath.Join(dir, "vuls-data-raw-vulncheck-kev"), "restore", ".")
+	if err := cmd.Run(); err != nil {
+		return xerrors.Errorf("Failed to exec %q. err: %w", cmd.String(), err)
+	}
+
+	return nil
 }
