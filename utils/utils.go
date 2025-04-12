@@ -72,6 +72,7 @@ func FetchURL(url string) ([]byte, error) {
 	return body, nil
 }
 
+// ToPtr returns a pointer to the value passed in
 func ToPtr[T any](v T) *T {
 	return &v
 }
