@@ -14,6 +14,6 @@ var fetchCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(fetchCmd)
 
-	fetchCmd.PersistentFlags().Int("batch-size", 50, "The number of batch size to insert.")
+	fetchCmd.PersistentFlags().Int("batch-size", 5, "The number of batch size to insert.")
 	_ = viper.BindPFlag("batch-size", fetchCmd.PersistentFlags().Lookup("batch-size"))
 }
