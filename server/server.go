@@ -65,11 +65,6 @@ func newRequestLoggerConfig(writer io.Writer) middleware.RequestLoggerConfig {
 		LogResponseSize:  true,
 
 		LogValuesFunc: func(_ echo.Context, v middleware.RequestLoggerValues) error {
-			errStr := ""
-			if v.Error != nil {
-				errStr = v.Error.Error()
-			}
-
 			type logFormat struct {
 				Time         string `json:"time"`
 				RemoteIP     string `json:"remote_ip"`
@@ -95,7 +90,12 @@ func newRequestLoggerConfig(writer io.Writer) middleware.RequestLoggerConfig {
 				ID:           v.RequestID,
 				UserAgent:    v.UserAgent,
 				Status:       v.Status,
-				Error:        errStr,
+				Error: func() string {
+					if v.Error != nil {
+						return v.Error.Error()
+					}
+					return ""
+				}(),
 				Latency:      v.Latency.Nanoseconds(),
 				LatencyHuman: v.Latency.String(),
 				BytesIn: func() int64 {
